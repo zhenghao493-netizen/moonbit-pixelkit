@@ -32,6 +32,7 @@ Run the demo:
 moon run cmd/main
 moon run examples/ascii_maze
 moon run examples/reachable_area
+moon run examples/weighted_grid
 ```
 
 ## Example
