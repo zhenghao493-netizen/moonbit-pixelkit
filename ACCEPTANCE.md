@@ -18,6 +18,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - Public repository with visible commit history.
 - `README.md` with project status, commands, examples, API overview, and roadmap.
 - `moonbit-pixelkit-project-proposal.md` with the project proposal.
+- `CHANGELOG.md` with the `0.1.0` release candidate notes.
 - `LICENSE` using MIT.
 - `.github/workflows/ci.yml` running `moon check` and `moon test`.
 - Runnable examples under `examples/`.
@@ -73,4 +74,12 @@ Formal mooncakes.io publication is planned after account login and final review:
 ```bash
 moon login
 moon publish
+```
+
+Recommended release tag after final review:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+git push gitlink v0.1.0
 ```

@@ -28,6 +28,7 @@ The repository currently includes the minimum assets expected for a reusable Moo
 - GitHub Actions workflow for `moon check` and `moon test`
 - project proposal document: `moonbit-pixelkit-project-proposal.md`
 - acceptance guide: `ACCEPTANCE.md`
+- changelog: `CHANGELOG.md`
 
 ## Quick Start
 
@@ -55,6 +56,7 @@ moon package
 ```
 
 See [ACCEPTANCE.md](ACCEPTANCE.md) for reviewer-oriented verification notes.
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## Example
 
@@ -91,6 +93,31 @@ println("path length: \{path.length()}")
 - More examples for weighted terrain and turn-based movement ranges.
 - Mooncakes package publishing.
 - Optional Tiled JSON import experiments after the core API settles.
+
+## Release Preparation
+
+The package metadata is set to version `0.1.0` in `moon.mod`.
+
+Local packaging is verified with:
+
+```bash
+moon package
+```
+
+Formal mooncakes.io publication requires account login:
+
+```bash
+moon login
+moon publish
+```
+
+Recommended release tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+git push gitlink v0.1.0
+```
 
 ## Development Notes
 

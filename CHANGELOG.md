@@ -1,0 +1,38 @@
+# Changelog
+
+All notable changes to `moonbit-pixelkit` are documented here.
+
+## 0.1.0 - 2026-07-08
+
+Initial contest-ready release candidate.
+
+### Added
+
+- MoonBit package metadata and CI workflow.
+- ASCII tile-map parser with default `#`, `.`, `S`, and `G` conventions.
+- CSV tile-map parser with configurable wall ids and terrain costs.
+- `TileMap` queries for dimensions, bounds, tile lookup, walkability, movement costs, and tile id lookup.
+- Four-way and eight-way neighbor helpers.
+- BFS reachable-area search for movement-budget style gameplay.
+- A* pathfinding with four-way and optional diagonal movement.
+- ASCII path rendering with `*` overlays.
+- Runnable examples:
+  - `cmd/main`
+  - `examples/ascii_maze`
+  - `examples/reachable_area`
+  - `examples/weighted_grid`
+  - `examples/game_loop_stub`
+- Acceptance guide for reviewers.
+
+### Fixed
+
+- Diagonal A* now uses a Chebyshev heuristic instead of Manhattan distance.
+- ASCII and CSV parsers accept CRLF line endings and trailing newlines.
+- Weighted-grid example reports movement cost without counting the starting tile.
+- Game-loop example checks that start and goal markers exist before indexing.
+
+### Validation
+
+- `moon check` passes.
+- `moon test` passes with 19 tests.
+- `moon package` creates `_build/publish/ttxiangshang-moonbit-pixelkit-0.1.0.zip`.
