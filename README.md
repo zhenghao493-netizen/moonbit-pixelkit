@@ -91,24 +91,19 @@ println("path length: \{path.length()}")
 
 - Structured parse and pathfinding error types.
 - More examples for weighted terrain and turn-based movement ranges.
-- Mooncakes package publishing.
+- More package examples after the `0.1.0` Mooncakes release.
 - Optional Tiled JSON import experiments after the core API settles.
 
-## Release Preparation
+## Release
 
-The package metadata is set to version `0.1.0` in `moon.mod`.
+Version `0.1.0` is published on Mooncakes:
+
+https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
 
 Local packaging is verified with:
 
 ```bash
 moon package
-```
-
-Formal mooncakes.io publication requires account login:
-
-```bash
-moon login
-moon publish
 ```
 
 Recommended release tag:

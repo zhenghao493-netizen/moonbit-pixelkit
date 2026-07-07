@@ -59,21 +59,18 @@ Expected baseline:
 
 - The package intentionally targets small to medium grid maps for games, demos, and teaching examples.
 - PNG, TMX, and Tiled JSON parsing are not included in the current milestone.
-- `mooncakes.io` publishing is prepared locally with `moon package`; final `moon publish` requires account login.
+- Mooncakes publication is complete for version `0.1.0`.
 
 ## Publication Status
 
-The package is ready for publication preparation:
+Version `0.1.0` is published on Mooncakes:
+
+https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
+
+The package archive can also be rebuilt locally:
 
 ```bash
 moon package
-```
-
-Formal mooncakes.io publication is planned after account login and final review:
-
-```bash
-moon login
-moon publish
 ```
 
 Recommended release tag after final review:
