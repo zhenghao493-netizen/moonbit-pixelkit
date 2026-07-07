@@ -67,6 +67,22 @@ test "parse CSV map walls and tile ids" {
 }
 
 ///|
+test "CSV parser supports terrain costs" {
+  let source = (
+    #|0,2,3
+    #|1,0,2
+  )
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("2", 4), terrain_cost("3", 8)]),
+  ).unwrap()
+  debug_inspect(map.movement_cost(point(0, 0)), content="Some(1)")
+  debug_inspect(map.movement_cost(point(1, 0)), content="Some(4)")
+  debug_inspect(map.movement_cost(point(2, 0)), content="Some(8)")
+  inspect(map.is_walkable(point(0, 1)), content="false")
+}
+
+///|
 test "neighbors helpers" {
   inspect(neighbors4(point(2, 2)).length(), content="4")
   inspect(neighbors8(point(2, 2)).length(), content="8")

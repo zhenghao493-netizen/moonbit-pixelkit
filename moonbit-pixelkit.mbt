@@ -31,6 +31,19 @@ pub struct SearchOptions {
   allow_diagonal : Bool
 } derive(Eq, Debug)
 
+///| A per-tile movement cost override for CSV maps.
+pub struct TerrainCost {
+  id : String
+  cost : Int
+} derive(Eq, Debug)
+
+///| Options for CSV map parsing.
+pub struct CsvOptions {
+  wall_ids : Array[String]
+  terrain_costs : Array[TerrainCost]
+  default_cost : Int
+} derive(Debug)
+
 ///| Default ASCII conventions: `#` walls, `.` floors, `S` start, `G` goal.
 pub fn AsciiOptions::default() -> AsciiOptions {
   { wall: '#', floor: '.', start: 'S', goal: 'G' }
@@ -41,9 +54,28 @@ pub fn SearchOptions::default() -> SearchOptions {
   { allow_diagonal: false }
 }
 
+///| Default CSV conventions: tile id `1` is a wall and other ids cost 1.
+pub fn CsvOptions::default() -> CsvOptions {
+  { wall_ids: ["1"], terrain_costs: [], default_cost: 1 }
+}
+
 ///| Create search options.
 pub fn search_options(allow_diagonal~ : Bool = false) -> SearchOptions {
   { allow_diagonal, }
+}
+
+///| Create a CSV terrain cost override.
+pub fn terrain_cost(id : String, cost : Int) -> TerrainCost {
+  { id, cost }
+}
+
+///| Create CSV parsing options.
+pub fn csv_options(
+  wall_ids~ : Array[String] = ["1"],
+  terrain_costs~ : Array[TerrainCost] = [],
+  default_cost~ : Int = 1,
+) -> CsvOptions {
+  { wall_ids, terrain_costs, default_cost }
 }
 
 ///| Create a point.
@@ -176,6 +208,31 @@ pub fn parse_ascii_map(
 
 ///| Parse a CSV tile map. `1` is treated as a wall; all other ids are walkable.
 pub fn parse_csv_map(input : String) -> Result[TileMap, String] {
+  parse_csv_map_with_options(input, CsvOptions::default())
+}
+
+fn CsvOptions::cost_for(self : CsvOptions, id : String) -> Int {
+  for item in self.terrain_costs {
+    if item.id == id {
+      return item.cost
+    }
+  }
+  self.default_cost
+}
+
+///| Parse a CSV tile map with configurable wall ids and terrain costs.
+pub fn parse_csv_map_with_options(
+  input : String,
+  options : CsvOptions,
+) -> Result[TileMap, String] {
+  if options.default_cost <= 0 {
+    return Err("default_cost must be positive")
+  }
+  for item in options.terrain_costs {
+    if item.cost <= 0 {
+      return Err("terrain cost for '\{item.id}' must be positive")
+    }
+  }
   let rows = input.split("\n").map(row => row.to_owned()).collect()
   if rows.length() == 0 || (rows.length() == 1 && rows[0].length() == 0) {
     return Err("map is empty")
@@ -194,7 +251,8 @@ pub fn parse_csv_map(input : String) -> Result[TileMap, String] {
       )
     }
     for id in cells {
-      tiles.push(tile(id, id == "1", if id == "1" { 0 } else { 1 }))
+      let is_wall = options.wall_ids.contains(id)
+      tiles.push(tile(id, is_wall, if is_wall { 0 } else { options.cost_for(id) }))
     }
   }
   Ok({ width, height: rows.length(), tiles })
