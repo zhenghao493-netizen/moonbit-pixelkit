@@ -1,0 +1,7 @@
+import {
+  "ttxiangshang/moonbit-pixelkit" @pixelkit
+}
+
+options(
+  "is-main": true,
+)

@@ -37,6 +37,7 @@ moon run examples/ascii_maze
 moon run examples/reachable_area
 moon run examples/weighted_grid
 moon run examples/game_loop_stub
+moon run examples/turn_based_movement
 ```
 
 Expected baseline:
@@ -44,6 +45,7 @@ Expected baseline:
 - `moon test` passes all tests.
 - `moon package` creates a package archive under `_build/publish/`.
 - Each example prints a short terminal result without requiring network access.
+- `examples/turn_based_movement` demonstrates game-style movement range and path planning in one run.
 
 ## Feature Coverage
 

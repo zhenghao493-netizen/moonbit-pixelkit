@@ -15,6 +15,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - four-way and eight-way neighbor helpers
 - BFS reachable-area search
 - A* path search
+- game-style examples for pathfinding and turn-based movement
 - CI with `moon check` and `moon test`
 
 ## Acceptance Checklist
@@ -47,6 +48,7 @@ moon run examples/ascii_maze
 moon run examples/reachable_area
 moon run examples/weighted_grid
 moon run examples/game_loop_stub
+moon run examples/turn_based_movement
 ```
 
 Build the publish archive:
@@ -90,7 +92,7 @@ println("path length: \{path.length()}")
 ## Roadmap
 
 - Structured parse and pathfinding error types.
-- More examples for weighted terrain and turn-based movement ranges.
+- Additional gameplay-style examples after the core API settles.
 - More package examples after the `0.1.0` Mooncakes release.
 - Optional Tiled JSON import experiments after the core API settles.
 
@@ -99,6 +101,8 @@ println("path length: \{path.length()}")
 Version `0.1.0` is published on Mooncakes:
 
 https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
+
+The main branch is now continuing toward `0.1.1`.
 
 Local packaging is verified with:
 
@@ -126,6 +130,7 @@ moon run examples/ascii_maze
 moon run examples/reachable_area
 moon run examples/weighted_grid
 moon run examples/game_loop_stub
+moon run examples/turn_based_movement
 moon package
 ```
 

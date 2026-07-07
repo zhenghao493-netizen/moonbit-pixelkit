@@ -2,6 +2,12 @@
 
 All notable changes to `moonbit-pixelkit` are documented here.
 
+## 0.1.1 - Unreleased
+
+### Added
+
+- Added `examples/turn_based_movement`, a game-style example that combines BFS reachable cells with A* path planning.
+
 ## 0.1.0 - 2026-07-08
 
 Initial contest-ready release candidate.
