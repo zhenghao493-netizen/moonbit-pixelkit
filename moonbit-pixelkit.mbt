@@ -282,6 +282,35 @@ pub fn neighbors8(p : Point) -> Array[Point] {
   ]
 }
 
+fn render_tile(point : Point, tile : Tile, path : Array[Point]) -> Char {
+  if tile.id == "start" {
+    'S'
+  } else if tile.id == "goal" {
+    'G'
+  } else if path.contains(point) {
+    '*'
+  } else if tile.wall {
+    '#'
+  } else {
+    '.'
+  }
+}
+
+///| Render a map as ASCII, optionally overlaying a path with `*`.
+pub fn TileMap::render_ascii(self : TileMap, path~ : Array[Point] = []) -> String {
+  let chars : Array[Char] = []
+  for y in 0..<self.height {
+    for x in 0..<self.width {
+      let p = point(x, y)
+      chars.push(render_tile(p, self.tiles[self.index(p)], path))
+    }
+    if y + 1 < self.height {
+      chars.push('\n')
+    }
+  }
+  String::from_array(chars)
+}
+
 fn abs_int(value : Int) -> Int {
   if value < 0 { -value } else { value }
 }

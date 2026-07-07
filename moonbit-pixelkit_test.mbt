@@ -119,6 +119,25 @@ test "A star finds a path around walls" {
 }
 
 ///|
+test "render ASCII overlays path" {
+  let source = (
+    #|S..
+    #|##.
+    #|..G
+  )
+  let map = parse_ascii_map(source).unwrap()
+  let path = astar(map, point(0, 0), point(2, 2)).unwrap().unwrap()
+  inspect(
+    map.render_ascii(path=path),
+    content=(
+      #|S**
+      #|##*
+      #|..G
+    ),
+  )
+}
+
+///|
 test "A star reports unreachable goals" {
   let source = (
     #|S#G
