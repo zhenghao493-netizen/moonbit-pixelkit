@@ -141,6 +141,22 @@ fn tile(id : String, wall : Bool, cost : Int) -> Tile {
   { id, wall, cost }
 }
 
+fn strip_trailing_cr(row : String) -> String {
+  if row.has_suffix("\r") {
+    row.view(end_offset=row.length() - 1).to_owned()
+  } else {
+    row
+  }
+}
+
+fn input_rows(input : String) -> Array[String] {
+  let rows = input.split("\n").map(row => strip_trailing_cr(row.to_owned())).collect()
+  while rows.length() > 0 && rows[rows.length() - 1] == "" {
+    let _ = rows.pop()
+  }
+  rows
+}
+
 ///| Return the tile id.
 pub fn Tile::id(self : Tile) -> String {
   self.id
@@ -172,8 +188,8 @@ pub fn parse_ascii_map(
   input : String,
   options~ : AsciiOptions = AsciiOptions::default(),
 ) -> Result[TileMap, String] {
-  let rows = input.split("\n").map(row => row.to_owned()).collect()
-  if rows.length() == 0 || (rows.length() == 1 && rows[0].length() == 0) {
+  let rows = input_rows(input)
+  if rows.length() == 0 {
     return Err("map is empty")
   }
   let width = rows[0].iter().count()
@@ -233,8 +249,8 @@ pub fn parse_csv_map_with_options(
       return Err("terrain cost for '\{item.id}' must be positive")
     }
   }
-  let rows = input.split("\n").map(row => row.to_owned()).collect()
-  if rows.length() == 0 || (rows.length() == 1 && rows[0].length() == 0) {
+  let rows = input_rows(input)
+  if rows.length() == 0 {
     return Err("map is empty")
   }
   let first = rows[0].split(",").map(cell => cell.trim().to_owned()).collect()
@@ -319,6 +335,16 @@ fn manhattan(a : Point, b : Point) -> Int {
   abs_int(a.x - b.x) + abs_int(a.y - b.y)
 }
 
+fn chebyshev(a : Point, b : Point) -> Int {
+  let dx = abs_int(a.x - b.x)
+  let dy = abs_int(a.y - b.y)
+  if dx > dy { dx } else { dy }
+}
+
+fn heuristic(a : Point, b : Point, options : SearchOptions) -> Int {
+  if options.allow_diagonal { chebyshev(a, b) } else { manhattan(a, b) }
+}
+
 fn TileMap::point_from_index(self : TileMap, index : Int) -> Point {
   point(index % self.width, index / self.width)
 }
@@ -395,7 +421,7 @@ pub fn astar(
     for p in open {
       let index = map.index(p)
       if !closed[index] {
-        let score = g_score[index] + manhattan(p, goal)
+        let score = g_score[index] + heuristic(p, goal, options)
         if score < best_score {
           best_score = score
           best_index = index

@@ -58,6 +58,14 @@ test "ASCII parser rejects empty maps" {
 }
 
 ///|
+test "ASCII parser accepts CRLF and trailing newline" {
+  let map = parse_ascii_map("S.\r\n.G\r\n").unwrap()
+  inspect(map.width(), content="2")
+  inspect(map.height(), content="2")
+  debug_inspect(map.points_with_id("goal")[0], content="{ x: 1, y: 1 }")
+}
+
+///|
 test "parse CSV map walls and tile ids" {
   let source = (
     #|0,1,2
@@ -96,6 +104,14 @@ test "CSV parser rejects invalid dimensions and costs" {
   inspect(parse_csv_map(non_rect) is Err(_), content="true")
   let bad_options = csv_options(terrain_costs=[terrain_cost("2", 0)])
   inspect(parse_csv_map_with_options("0,2", bad_options) is Err(_), content="true")
+}
+
+///|
+test "CSV parser accepts CRLF and trailing newline" {
+  let map = parse_csv_map("0,1\r\n2,3\r\n").unwrap()
+  inspect(map.width(), content="2")
+  inspect(map.height(), content="2")
+  inspect(map.is_walkable(point(1, 0)), content="false")
 }
 
 ///|
@@ -201,4 +217,24 @@ test "A star can use diagonal movement when enabled" {
     options=search_options(allow_diagonal=true),
   ).unwrap().unwrap()
   inspect(path.length(), content="2")
+}
+
+///|
+test "A star diagonal movement still respects terrain costs" {
+  let source = (
+    #|0,9,0
+    #|0,0,0
+  )
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("9", 9)]),
+  ).unwrap()
+  let path = astar(
+    map,
+    point(0, 0),
+    point(2, 0),
+    options=search_options(allow_diagonal=true),
+  ).unwrap().unwrap()
+  // Direct path through (1, 0) costs 10; diagonal detour costs 2.
+  debug_inspect(path, content="[{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 0 }]")
 }

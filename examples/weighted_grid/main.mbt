@@ -15,9 +15,9 @@ fn main {
     @pixelkit.point(3, 0),
   ).unwrap().unwrap()
   let mut total_cost = 0
-  for p in path {
-    total_cost = total_cost + map.movement_cost(p).unwrap()
+  for index in 1..<path.length() {
+    total_cost = total_cost + map.movement_cost(path[index]).unwrap()
   }
   println("weighted_grid path length: \{path.length()}")
-  println("weighted_grid path cost: \{total_cost}")
+  println("weighted_grid movement cost: \{total_cost}")
 }
