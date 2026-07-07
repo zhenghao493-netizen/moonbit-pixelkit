@@ -27,6 +27,7 @@ The repository currently includes the minimum assets expected for a reusable Moo
 - unit tests for parser behavior, map queries, reachability, A*, diagonal movement, and error paths
 - GitHub Actions workflow for `moon check` and `moon test`
 - project proposal document: `moonbit-pixelkit-project-proposal.md`
+- acceptance guide: `ACCEPTANCE.md`
 
 ## Quick Start
 
@@ -44,7 +45,16 @@ moon run cmd/main
 moon run examples/ascii_maze
 moon run examples/reachable_area
 moon run examples/weighted_grid
+moon run examples/game_loop_stub
 ```
+
+Build the publish archive:
+
+```bash
+moon package
+```
+
+See [ACCEPTANCE.md](ACCEPTANCE.md) for reviewer-oriented verification notes.
 
 ## Example
 
@@ -93,6 +103,8 @@ moon run cmd/main
 moon run examples/ascii_maze
 moon run examples/reachable_area
 moon run examples/weighted_grid
+moon run examples/game_loop_stub
+moon package
 ```
 
 Git remotes used during contest development:
