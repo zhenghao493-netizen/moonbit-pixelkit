@@ -53,6 +53,11 @@ test "ASCII parser rejects unknown tiles" {
 }
 
 ///|
+test "ASCII parser rejects empty maps" {
+  inspect(parse_ascii_map("") is Err(_), content="true")
+}
+
+///|
 test "parse CSV map walls and tile ids" {
   let source = (
     #|0,1,2
@@ -83,6 +88,17 @@ test "CSV parser supports terrain costs" {
 }
 
 ///|
+test "CSV parser rejects invalid dimensions and costs" {
+  let non_rect = (
+    #|0,1
+    #|0,1,2
+  )
+  inspect(parse_csv_map(non_rect) is Err(_), content="true")
+  let bad_options = csv_options(terrain_costs=[terrain_cost("2", 0)])
+  inspect(parse_csv_map_with_options("0,2", bad_options) is Err(_), content="true")
+}
+
+///|
 test "neighbors helpers" {
   inspect(neighbors4(point(2, 2)).length(), content="4")
   inspect(neighbors8(point(2, 2)).length(), content="8")
@@ -102,6 +118,17 @@ test "BFS reachable respects walls and movement budget" {
   inspect(reachable.contains(point(2, 0)), content="true")
   inspect(reachable.contains(point(2, 1)), content="false")
   inspect(reachable.contains(point(0, 1)), content="false")
+}
+
+///|
+test "BFS rejects invalid starts and budgets" {
+  let source = (
+    #|S#
+    #|.G
+  )
+  let map = parse_ascii_map(source).unwrap()
+  inspect(bfs_reachable(map, point(1, 0), 2) is Err(_), content="true")
+  inspect(bfs_reachable(map, point(0, 0), -1) is Err(_), content="true")
 }
 
 ///|
@@ -147,6 +174,17 @@ test "A star reports unreachable goals" {
   let map = parse_ascii_map(source).unwrap()
   let path = astar(map, point(0, 0), point(2, 0)).unwrap()
   debug_inspect(path, content="None")
+}
+
+///|
+test "A star rejects blocked endpoints" {
+  let source = (
+    #|S#G
+    #|...
+  )
+  let map = parse_ascii_map(source).unwrap()
+  inspect(astar(map, point(1, 0), point(2, 0)) is Err(_), content="true")
+  inspect(astar(map, point(0, 0), point(1, 0)) is Err(_), content="true")
 }
 
 ///|
