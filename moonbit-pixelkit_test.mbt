@@ -14,6 +14,25 @@ test "parse ASCII map dimensions and walkability" {
 }
 
 ///|
+test "tile accessors and id lookup" {
+  let source = (
+    #|S.#
+    #|..G
+  )
+  let map = parse_ascii_map(source).unwrap()
+  let start_points = map.points_with_id("start")
+  let goal_points = map.points_with_id("goal")
+  inspect(start_points.length(), content="1")
+  inspect(goal_points.length(), content="1")
+  debug_inspect(start_points[0], content="{ x: 0, y: 0 }")
+  debug_inspect(goal_points[0], content="{ x: 2, y: 1 }")
+  let wall = map.tile_at(point(2, 0)).unwrap()
+  inspect(wall.id(), content="#")
+  inspect(wall.is_wall(), content="true")
+  inspect(wall.cost(), content="0")
+}
+
+///|
 test "ASCII parser rejects non-rectangular maps" {
   let source = (
     #|S.

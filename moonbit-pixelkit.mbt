@@ -109,6 +109,32 @@ fn tile(id : String, wall : Bool, cost : Int) -> Tile {
   { id, wall, cost }
 }
 
+///| Return the tile id.
+pub fn Tile::id(self : Tile) -> String {
+  self.id
+}
+
+///| Return whether the tile blocks movement.
+pub fn Tile::is_wall(self : Tile) -> Bool {
+  self.wall
+}
+
+///| Return the tile movement cost.
+pub fn Tile::cost(self : Tile) -> Int {
+  self.cost
+}
+
+///| Return every point whose tile id equals `id`.
+pub fn TileMap::points_with_id(self : TileMap, id : String) -> Array[Point] {
+  let points : Array[Point] = []
+  for index in 0..<self.tiles.length() {
+    if self.tiles[index].id == id {
+      points.push(self.point_from_index(index))
+    }
+  }
+  points
+}
+
 ///| Parse an ASCII tile map. Every row must have the same character length.
 pub fn parse_ascii_map(
   input : String,
