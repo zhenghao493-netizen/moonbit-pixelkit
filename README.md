@@ -17,6 +17,17 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - A* path search
 - CI with `moon check` and `moon test`
 
+## Acceptance Checklist
+
+The repository currently includes the minimum assets expected for a reusable MoonBit package:
+
+- public repository with MIT license
+- MoonBit module metadata in `moon.mod`
+- runnable examples under `examples/`
+- unit tests for parser behavior, map queries, reachability, A*, diagonal movement, and error paths
+- GitHub Actions workflow for `moon check` and `moon test`
+- project proposal document: `moonbit-pixelkit-project-proposal.md`
+
 ## Quick Start
 
 Run the checks:
@@ -67,10 +78,29 @@ println("path length: \{path.length()}")
 ## Roadmap
 
 - Structured parse and pathfinding error types.
-- User-configurable CSV terrain costs.
 - More examples for weighted terrain and turn-based movement ranges.
 - Mooncakes package publishing.
 - Optional Tiled JSON import experiments after the core API settles.
+
+## Development Notes
+
+Useful verification commands:
+
+```bash
+moon check
+moon test
+moon run cmd/main
+moon run examples/ascii_maze
+moon run examples/reachable_area
+moon run examples/weighted_grid
+```
+
+Git remotes used during contest development:
+
+```bash
+git push origin main
+git push gitlink main
+```
 
 ## License
 
