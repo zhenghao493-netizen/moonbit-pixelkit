@@ -8,7 +8,7 @@ repository = "https://www.gitlink.org.cn/ttxiangshang/moonbit-pixelkit"
 
 license = "MIT"
 
-keywords = ["game", "grid", "pathfinding", "tilemap"]
+keywords = [ "game", "grid", "pathfinding", "tilemap" ]
 
 preferred_target = "wasm-gc"
 

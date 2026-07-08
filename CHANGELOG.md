@@ -7,6 +7,9 @@ All notable changes to `moonbit-pixelkit` are documented here.
 ### Added
 
 - Added `examples/turn_based_movement`, a game-style example that combines BFS reachable cells with A* path planning.
+- Added `TileMap::first_point_with_id` and `TileMap::single_point_with_id` for named marker lookup.
+- Added `TileMap::path_cost` for movement-cost summaries.
+- Added `TileMap::render_ascii_overlay` for reachable-cell and path debug views.
 
 ## 0.1.0 - 2026-07-08
 

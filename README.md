@@ -15,6 +15,9 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - four-way and eight-way neighbor helpers
 - BFS reachable-area search
 - A* path search
+- start/goal lookup helpers
+- path movement-cost summaries
+- ASCII overlays for reachable cells and planned paths
 - game-style examples for pathfinding and turn-based movement
 - CI with `moon check` and `moon test`
 
@@ -84,16 +87,41 @@ println("path length: \{path.length()}")
 - `TileMap::tile_at(point)` returns a tile when the coordinate is valid.
 - `TileMap::is_walkable(point)` returns whether movement is allowed.
 - `TileMap::movement_cost(point)` returns the tile movement cost.
+- `TileMap::first_point_with_id(id)` returns the first matching tile coordinate.
+- `TileMap::single_point_with_id(id)` validates that exactly one matching tile exists.
+- `TileMap::path_cost(path)` sums movement cost after the starting cell.
+- `TileMap::render_ascii_overlay(reachable=..., path=...)` renders movement range and planned paths.
 - `neighbors4(point)` returns cardinal neighbors.
 - `neighbors8(point)` returns cardinal plus diagonal neighbors.
 - `bfs_reachable(map, start, max_cost, options~)` returns reachable cells.
 - `astar(map, start, goal, options~)` returns a path or `None`.
 
+## Turn-Based Movement Use Case
+
+`moonbit-pixelkit` is designed to cover a compact tactical-game loop:
+
+1. Parse an ASCII or CSV grid.
+2. Find named points such as `start` and `goal`.
+3. Compute the cells an actor can reach this turn.
+4. Plan a path to a selected target.
+5. Render a terminal overlay for debugging or examples.
+
+```moonbit
+let map = parse_ascii_map(source).unwrap()
+let actor = map.single_point_with_id("start").unwrap()
+let target = point(4, 1)
+let reachable = bfs_reachable(map, actor, 5).unwrap()
+let path = astar(map, actor, target).unwrap().unwrap()
+
+println("cost: \{map.path_cost(path).unwrap()}")
+println(map.render_ascii_overlay(reachable=reachable, path=path))
+```
+
 ## Roadmap
 
 - Structured parse and pathfinding error types.
-- Additional gameplay-style examples after the core API settles.
-- More package examples after the `0.1.0` Mooncakes release.
+- Additional gameplay helpers for turn previews and editor tooling.
+- More package examples after the `0.1.1` Mooncakes release.
 - Optional Tiled JSON import experiments after the core API settles.
 
 ## Release

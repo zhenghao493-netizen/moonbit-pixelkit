@@ -1,24 +1,28 @@
-///| A point in a 2D tile grid.
+///|
+/// A point in a 2D tile grid.
 pub struct Point {
   x : Int
   y : Int
 } derive(Eq, Debug)
 
-///| A parsed tile. `wall` means the tile blocks movement.
+///|
+/// A parsed tile. `wall` means the tile blocks movement.
 pub struct Tile {
   id : String
   wall : Bool
   cost : Int
 } derive(Eq, Debug)
 
-///| A rectangular 2D tile map stored in row-major order.
+///|
+/// A rectangular 2D tile map stored in row-major order.
 pub struct TileMap {
   width : Int
   height : Int
   tiles : Array[Tile]
 } derive(Debug)
 
-///| Options for ASCII map parsing.
+///|
+/// Options for ASCII map parsing.
 pub struct AsciiOptions {
   wall : Char
   floor : Char
@@ -26,93 +30,110 @@ pub struct AsciiOptions {
   goal : Char
 } derive(Eq, Debug)
 
-///| Options shared by path search helpers.
+///|
+/// Options shared by path search helpers.
 pub struct SearchOptions {
   allow_diagonal : Bool
 } derive(Eq, Debug)
 
-///| A per-tile movement cost override for CSV maps.
+///|
+/// A per-tile movement cost override for CSV maps.
 pub struct TerrainCost {
   id : String
   cost : Int
 } derive(Eq, Debug)
 
-///| Options for CSV map parsing.
+///|
+/// Options for CSV map parsing.
 pub struct CsvOptions {
   wall_ids : Array[String]
   terrain_costs : Array[TerrainCost]
   default_cost : Int
 } derive(Debug)
 
-///| Default ASCII conventions: `#` walls, `.` floors, `S` start, `G` goal.
+///|
+/// Default ASCII conventions: `#` walls, `.` floors, `S` start, `G` goal.
 pub fn AsciiOptions::default() -> AsciiOptions {
   { wall: '#', floor: '.', start: 'S', goal: 'G' }
 }
 
-///| Default path search settings: four-direction movement.
+///|
+/// Default path search settings: four-direction movement.
 pub fn SearchOptions::default() -> SearchOptions {
   { allow_diagonal: false }
 }
 
-///| Default CSV conventions: tile id `1` is a wall and other ids cost 1.
+///|
+/// Default CSV conventions: tile id `1` is a wall and other ids cost 1.
 pub fn CsvOptions::default() -> CsvOptions {
   { wall_ids: ["1"], terrain_costs: [], default_cost: 1 }
 }
 
-///| Create search options.
-pub fn search_options(allow_diagonal~ : Bool = false) -> SearchOptions {
+///|
+/// Create search options.
+pub fn search_options(allow_diagonal? : Bool = false) -> SearchOptions {
   { allow_diagonal, }
 }
 
-///| Create a CSV terrain cost override.
+///|
+/// Create a CSV terrain cost override.
 pub fn terrain_cost(id : String, cost : Int) -> TerrainCost {
   { id, cost }
 }
 
-///| Create CSV parsing options.
+///|
+/// Create CSV parsing options.
 pub fn csv_options(
-  wall_ids~ : Array[String] = ["1"],
-  terrain_costs~ : Array[TerrainCost] = [],
-  default_cost~ : Int = 1,
+  wall_ids? : Array[String] = ["1"],
+  terrain_costs? : Array[TerrainCost] = [],
+  default_cost? : Int = 1,
 ) -> CsvOptions {
   { wall_ids, terrain_costs, default_cost }
 }
 
-///| Create a point.
+///|
+/// Create a point.
 pub fn point(x : Int, y : Int) -> Point {
   { x, y }
 }
 
-///| Return the x coordinate.
+///|
+/// Return the x coordinate.
 pub fn Point::x(self : Point) -> Int {
   self.x
 }
 
-///| Return the y coordinate.
+///|
+/// Return the y coordinate.
 pub fn Point::y(self : Point) -> Int {
   self.y
 }
 
-///| Return the map width.
+///|
+/// Return the map width.
 pub fn TileMap::width(self : TileMap) -> Int {
   self.width
 }
 
-///| Return the map height.
+///|
+/// Return the map height.
 pub fn TileMap::height(self : TileMap) -> Int {
   self.height
 }
 
-///| Return true when `p` is inside the map rectangle.
+///|
+/// Return true when `p` is inside the map rectangle.
 pub fn TileMap::in_bounds(self : TileMap, p : Point) -> Bool {
   p.x >= 0 && p.y >= 0 && p.x < self.width && p.y < self.height
 }
 
+///|
 fn TileMap::index(self : TileMap, p : Point) -> Int {
   p.y * self.width + p.x
 }
 
-///| Return the tile at `p`, or `None` when the coordinate is out of bounds.
+///|
+/// Return the tile at `p`, or `None` when the coordinate is out of bounds.
 pub fn TileMap::tile_at(self : TileMap, p : Point) -> Tile? {
   if self.in_bounds(p) {
     Some(self.tiles[self.index(p)])
@@ -121,7 +142,8 @@ pub fn TileMap::tile_at(self : TileMap, p : Point) -> Tile? {
   }
 }
 
-///| Return true when a coordinate is inside the map and not a wall.
+///|
+/// Return true when a coordinate is inside the map and not a wall.
 pub fn TileMap::is_walkable(self : TileMap, p : Point) -> Bool {
   match self.tile_at(p) {
     Some(tile) => !tile.wall
@@ -129,7 +151,8 @@ pub fn TileMap::is_walkable(self : TileMap, p : Point) -> Bool {
   }
 }
 
-///| Return the movement cost for `p`, or `None` for out-of-bounds cells.
+///|
+/// Return the movement cost for `p`, or `None` for out-of-bounds cells.
 pub fn TileMap::movement_cost(self : TileMap, p : Point) -> Int? {
   match self.tile_at(p) {
     Some(tile) => Some(tile.cost)
@@ -137,10 +160,12 @@ pub fn TileMap::movement_cost(self : TileMap, p : Point) -> Int? {
   }
 }
 
+///|
 fn tile(id : String, wall : Bool, cost : Int) -> Tile {
   { id, wall, cost }
 }
 
+///|
 fn strip_trailing_cr(row : String) -> String {
   if row.has_suffix("\r") {
     row.view(end_offset=row.length() - 1).to_owned()
@@ -149,30 +174,38 @@ fn strip_trailing_cr(row : String) -> String {
   }
 }
 
+///|
 fn input_rows(input : String) -> Array[String] {
-  let rows = input.split("\n").map(row => strip_trailing_cr(row.to_owned())).collect()
+  let rows = input
+    .split("\n")
+    .map(row => strip_trailing_cr(row.to_owned()))
+    .collect()
   while rows.length() > 0 && rows[rows.length() - 1] == "" {
     let _ = rows.pop()
   }
   rows
 }
 
-///| Return the tile id.
+///|
+/// Return the tile id.
 pub fn Tile::id(self : Tile) -> String {
   self.id
 }
 
-///| Return whether the tile blocks movement.
+///|
+/// Return whether the tile blocks movement.
 pub fn Tile::is_wall(self : Tile) -> Bool {
   self.wall
 }
 
-///| Return the tile movement cost.
+///|
+/// Return the tile movement cost.
 pub fn Tile::cost(self : Tile) -> Int {
   self.cost
 }
 
-///| Return every point whose tile id equals `id`.
+///|
+/// Return every point whose tile id equals `id`.
 pub fn TileMap::points_with_id(self : TileMap, id : String) -> Array[Point] {
   let points : Array[Point] = []
   for index in 0..<self.tiles.length() {
@@ -183,10 +216,36 @@ pub fn TileMap::points_with_id(self : TileMap, id : String) -> Array[Point] {
   points
 }
 
-///| Parse an ASCII tile map. Every row must have the same character length.
+///|
+/// Return the first point whose tile id equals `id`, or `None` when absent.
+pub fn TileMap::first_point_with_id(self : TileMap, id : String) -> Point? {
+  let points = self.points_with_id(id)
+  if points.length() == 0 {
+    None
+  } else {
+    Some(points[0])
+  }
+}
+
+///|
+/// Return one required point for `id`.
+pub fn TileMap::single_point_with_id(
+  self : TileMap,
+  id : String,
+) -> Result[Point, String] {
+  let points = self.points_with_id(id)
+  if points.length() == 1 {
+    Ok(points[0])
+  } else {
+    Err("expected one tile with id '\{id}', found \{points.length()}")
+  }
+}
+
+///|
+/// Parse an ASCII tile map. Every row must have the same character length.
 pub fn parse_ascii_map(
   input : String,
-  options~ : AsciiOptions = AsciiOptions::default(),
+  options? : AsciiOptions = AsciiOptions::default(),
 ) -> Result[TileMap, String] {
   let rows = input_rows(input)
   if rows.length() == 0 {
@@ -201,9 +260,7 @@ pub fn parse_ascii_map(
     let row = rows[row_index]
     let row_width = row.iter().count()
     if row_width != width {
-      return Err(
-        "row \{row_index} has width \{row_width}, expected \{width}",
-      )
+      return Err("row \{row_index} has width \{row_width}, expected \{width}")
     }
     for ch in row.iter() {
       if ch == options.wall {
@@ -222,11 +279,13 @@ pub fn parse_ascii_map(
   Ok({ width, height: rows.length(), tiles })
 }
 
-///| Parse a CSV tile map. `1` is treated as a wall; all other ids are walkable.
+///|
+/// Parse a CSV tile map. `1` is treated as a wall; all other ids are walkable.
 pub fn parse_csv_map(input : String) -> Result[TileMap, String] {
   parse_csv_map_with_options(input, CsvOptions::default())
 }
 
+///|
 fn CsvOptions::cost_for(self : CsvOptions, id : String) -> Int {
   for item in self.terrain_costs {
     if item.id == id {
@@ -236,7 +295,8 @@ fn CsvOptions::cost_for(self : CsvOptions, id : String) -> Int {
   self.default_cost
 }
 
-///| Parse a CSV tile map with configurable wall ids and terrain costs.
+///|
+/// Parse a CSV tile map with configurable wall ids and terrain costs.
 pub fn parse_csv_map_with_options(
   input : String,
   options : CsvOptions,
@@ -260,7 +320,10 @@ pub fn parse_csv_map_with_options(
   }
   let tiles : Array[Tile] = []
   for row_index in 0..<rows.length() {
-    let cells = rows[row_index].split(",").map(cell => cell.trim().to_owned()).collect()
+    let cells = rows[row_index]
+      .split(",")
+      .map(cell => cell.trim().to_owned())
+      .collect()
     if cells.length() != width {
       return Err(
         "row \{row_index} has width \{cells.length()}, expected \{width}",
@@ -268,13 +331,16 @@ pub fn parse_csv_map_with_options(
     }
     for id in cells {
       let is_wall = options.wall_ids.contains(id)
-      tiles.push(tile(id, is_wall, if is_wall { 0 } else { options.cost_for(id) }))
+      tiles.push(
+        tile(id, is_wall, if is_wall { 0 } else { options.cost_for(id) }),
+      )
     }
   }
   Ok({ width, height: rows.length(), tiles })
 }
 
-///| Four-direction neighbors in right, left, down, up order.
+///|
+/// Four-direction neighbors in right, left, down, up order.
 pub fn neighbors4(p : Point) -> Array[Point] {
   [
     point(p.x + 1, p.y),
@@ -284,7 +350,8 @@ pub fn neighbors4(p : Point) -> Array[Point] {
   ]
 }
 
-///| Eight-direction neighbors, including diagonals.
+///|
+/// Eight-direction neighbors, including diagonals.
 pub fn neighbors8(p : Point) -> Array[Point] {
   [
     point(p.x + 1, p.y),
@@ -298,7 +365,13 @@ pub fn neighbors8(p : Point) -> Array[Point] {
   ]
 }
 
-fn render_tile(point : Point, tile : Tile, path : Array[Point]) -> Char {
+///|
+fn render_tile_overlay(
+  point : Point,
+  tile : Tile,
+  reachable : Array[Point],
+  path : Array[Point],
+) -> Char {
   if tile.id == "start" {
     'S'
   } else if tile.id == "goal" {
@@ -307,18 +380,36 @@ fn render_tile(point : Point, tile : Tile, path : Array[Point]) -> Char {
     '*'
   } else if tile.wall {
     '#'
+  } else if reachable.contains(point) {
+    '+'
   } else {
     '.'
   }
 }
 
-///| Render a map as ASCII, optionally overlaying a path with `*`.
-pub fn TileMap::render_ascii(self : TileMap, path~ : Array[Point] = []) -> String {
+///|
+/// Render a map as ASCII, optionally overlaying a path with `*`.
+pub fn TileMap::render_ascii(
+  self : TileMap,
+  path? : Array[Point] = [],
+) -> String {
+  self.render_ascii_overlay(path~)
+}
+
+///|
+/// Render a map with reachable cells marked as `+` and path cells as `*`.
+pub fn TileMap::render_ascii_overlay(
+  self : TileMap,
+  reachable? : Array[Point] = [],
+  path? : Array[Point] = [],
+) -> String {
   let chars : Array[Char] = []
   for y in 0..<self.height {
     for x in 0..<self.width {
       let p = point(x, y)
-      chars.push(render_tile(p, self.tiles[self.index(p)], path))
+      chars.push(
+        render_tile_overlay(p, self.tiles[self.index(p)], reachable, path),
+      )
     }
     if y + 1 < self.height {
       chars.push('\n')
@@ -327,38 +418,83 @@ pub fn TileMap::render_ascii(self : TileMap, path~ : Array[Point] = []) -> Strin
   String::from_array(chars)
 }
 
-fn abs_int(value : Int) -> Int {
-  if value < 0 { -value } else { value }
+///|
+/// Return the movement cost of a path, excluding the starting cell.
+pub fn TileMap::path_cost(
+  self : TileMap,
+  path : Array[Point],
+) -> Result[Int, String] {
+  let mut total = 0
+  for index in 0..<path.length() {
+    let p = path[index]
+    if !self.in_bounds(p) {
+      return Err("path point (\{p.x}, \{p.y}) is out of bounds")
+    }
+    if !self.is_walkable(p) {
+      return Err("path point (\{p.x}, \{p.y}) is not walkable")
+    }
+    if index > 0 {
+      total = total + self.movement_cost(p).unwrap()
+    }
+  }
+  Ok(total)
 }
 
+///|
+fn abs_int(value : Int) -> Int {
+  if value < 0 {
+    -value
+  } else {
+    value
+  }
+}
+
+///|
 fn manhattan(a : Point, b : Point) -> Int {
   abs_int(a.x - b.x) + abs_int(a.y - b.y)
 }
 
+///|
 fn chebyshev(a : Point, b : Point) -> Int {
   let dx = abs_int(a.x - b.x)
   let dy = abs_int(a.y - b.y)
-  if dx > dy { dx } else { dy }
+  if dx > dy {
+    dx
+  } else {
+    dy
+  }
 }
 
+///|
 fn heuristic(a : Point, b : Point, options : SearchOptions) -> Int {
-  if options.allow_diagonal { chebyshev(a, b) } else { manhattan(a, b) }
+  if options.allow_diagonal {
+    chebyshev(a, b)
+  } else {
+    manhattan(a, b)
+  }
 }
 
+///|
 fn TileMap::point_from_index(self : TileMap, index : Int) -> Point {
   point(index % self.width, index / self.width)
 }
 
+///|
 fn candidate_neighbors(p : Point, options : SearchOptions) -> Array[Point] {
-  if options.allow_diagonal { neighbors8(p) } else { neighbors4(p) }
+  if options.allow_diagonal {
+    neighbors8(p)
+  } else {
+    neighbors4(p)
+  }
 }
 
-///| Return all walkable cells reachable from `start` within `max_cost`.
+///|
+/// Return all walkable cells reachable from `start` within `max_cost`.
 pub fn bfs_reachable(
   map : TileMap,
   start : Point,
   max_cost : Int,
-  options~ : SearchOptions = SearchOptions::default(),
+  options? : SearchOptions = SearchOptions::default(),
 ) -> Result[Array[Point], String] {
   if max_cost < 0 {
     return Err("max_cost must be non-negative")
@@ -380,7 +516,8 @@ pub fn bfs_reachable(
         let next_index = map.index(next)
         let step_cost = map.movement_cost(next).unwrap()
         let new_cost = current_cost + step_cost
-        if new_cost <= max_cost && (cost[next_index] == -1 || new_cost < cost[next_index]) {
+        if new_cost <= max_cost &&
+          (cost[next_index] == -1 || new_cost < cost[next_index]) {
           cost[next_index] = new_cost
           queue.push(next)
         }
@@ -396,12 +533,13 @@ pub fn bfs_reachable(
   Ok(reachable)
 }
 
-///| Find a path from `start` to `goal` with A*. Returns `None` when unreachable.
+///|
+/// Find a path from `start` to `goal` with A*. Returns `None` when unreachable.
 pub fn astar(
   map : TileMap,
   start : Point,
   goal : Point,
-  options~ : SearchOptions = SearchOptions::default(),
+  options? : SearchOptions = SearchOptions::default(),
 ) -> Result[Array[Point]?, String] {
   if !map.is_walkable(start) {
     return Err("start is not walkable")

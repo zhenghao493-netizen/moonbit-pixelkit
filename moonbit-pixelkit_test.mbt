@@ -1,9 +1,8 @@
 ///|
 test "parse ASCII map dimensions and walkability" {
-  let source = (
+  let source =
     #|S.#
     #|..G
-  )
   let result = parse_ascii_map(source)
   let map = result.unwrap()
   inspect(map.width(), content="3")
@@ -15,10 +14,9 @@ test "parse ASCII map dimensions and walkability" {
 
 ///|
 test "tile accessors and id lookup" {
-  let source = (
+  let source =
     #|S.#
     #|..G
-  )
   let map = parse_ascii_map(source).unwrap()
   let start_points = map.points_with_id("start")
   let goal_points = map.points_with_id("goal")
@@ -30,24 +28,32 @@ test "tile accessors and id lookup" {
   inspect(wall.id(), content="#")
   inspect(wall.is_wall(), content="true")
   inspect(wall.cost(), content="0")
+  debug_inspect(
+    map.first_point_with_id("start"),
+    content="Some({ x: 0, y: 0 })",
+  )
+  debug_inspect(map.first_point_with_id("missing"), content="None")
+  debug_inspect(
+    map.single_point_with_id("goal").unwrap(),
+    content="{ x: 2, y: 1 }",
+  )
+  inspect(map.single_point_with_id(".") is Err(_), content="true")
 }
 
 ///|
 test "ASCII parser rejects non-rectangular maps" {
-  let source = (
+  let source =
     #|S.
     #|..G
-  )
   let result = parse_ascii_map(source)
   inspect(result is Err(_), content="true")
 }
 
 ///|
 test "ASCII parser rejects unknown tiles" {
-  let source = (
+  let source =
     #|Sx
     #|.G
-  )
   let result = parse_ascii_map(source)
   inspect(result is Err(_), content="true")
 }
@@ -67,10 +73,9 @@ test "ASCII parser accepts CRLF and trailing newline" {
 
 ///|
 test "parse CSV map walls and tile ids" {
-  let source = (
+  let source =
     #|0,1,2
     #|0,0,3
-  )
   let map = parse_csv_map(source).unwrap()
   inspect(map.width(), content="3")
   inspect(map.height(), content="2")
@@ -81,10 +86,9 @@ test "parse CSV map walls and tile ids" {
 
 ///|
 test "CSV parser supports terrain costs" {
-  let source = (
+  let source =
     #|0,2,3
     #|1,0,2
-  )
   let map = parse_csv_map_with_options(
     source,
     csv_options(terrain_costs=[terrain_cost("2", 4), terrain_cost("3", 8)]),
@@ -97,13 +101,15 @@ test "CSV parser supports terrain costs" {
 
 ///|
 test "CSV parser rejects invalid dimensions and costs" {
-  let non_rect = (
+  let non_rect =
     #|0,1
     #|0,1,2
-  )
   inspect(parse_csv_map(non_rect) is Err(_), content="true")
   let bad_options = csv_options(terrain_costs=[terrain_cost("2", 0)])
-  inspect(parse_csv_map_with_options("0,2", bad_options) is Err(_), content="true")
+  inspect(
+    parse_csv_map_with_options("0,2", bad_options) is Err(_),
+    content="true",
+  )
 }
 
 ///|
@@ -122,11 +128,10 @@ test "neighbors helpers" {
 
 ///|
 test "BFS reachable respects walls and movement budget" {
-  let source = (
+  let source =
     #|S..
     #|##.
     #|..G
-  )
   let map = parse_ascii_map(source).unwrap()
   let reachable = bfs_reachable(map, point(0, 0), 2).unwrap()
   inspect(reachable.contains(point(0, 0)), content="true")
@@ -138,10 +143,9 @@ test "BFS reachable respects walls and movement budget" {
 
 ///|
 test "BFS rejects invalid starts and budgets" {
-  let source = (
+  let source =
     #|S#
     #|.G
-  )
   let map = parse_ascii_map(source).unwrap()
   inspect(bfs_reachable(map, point(1, 0), 2) is Err(_), content="true")
   inspect(bfs_reachable(map, point(0, 0), -1) is Err(_), content="true")
@@ -149,11 +153,10 @@ test "BFS rejects invalid starts and budgets" {
 
 ///|
 test "A star finds a path around walls" {
-  let source = (
+  let source =
     #|S..
     #|##.
     #|..G
-  )
   let map = parse_ascii_map(source).unwrap()
   let path = astar(map, point(0, 0), point(2, 2)).unwrap().unwrap()
   inspect(path.length(), content="5")
@@ -163,15 +166,14 @@ test "A star finds a path around walls" {
 
 ///|
 test "render ASCII overlays path" {
-  let source = (
+  let source =
     #|S..
     #|##.
     #|..G
-  )
   let map = parse_ascii_map(source).unwrap()
   let path = astar(map, point(0, 0), point(2, 2)).unwrap().unwrap()
   inspect(
-    map.render_ascii(path=path),
+    map.render_ascii(path~),
     content=(
       #|S**
       #|##*
@@ -181,12 +183,45 @@ test "render ASCII overlays path" {
 }
 
 ///|
+test "render ASCII overlays reachable cells and paths" {
+  let source =
+    #|S..
+    #|##.
+    #|..G
+  let map = parse_ascii_map(source).unwrap()
+  let reachable = bfs_reachable(map, point(0, 0), 2).unwrap()
+  let path = astar(map, point(0, 0), point(2, 2)).unwrap().unwrap()
+  inspect(
+    map.render_ascii_overlay(reachable~, path~),
+    content=(
+      #|S**
+      #|##*
+      #|..G
+    ),
+  )
+}
+
+///|
+test "path cost sums movement after the starting cell" {
+  let source =
+    #|0,2,3
+    #|0,0,0
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("2", 4), terrain_cost("3", 8)]),
+  ).unwrap()
+  let path = [point(0, 0), point(1, 0), point(2, 0)]
+  inspect(map.path_cost(path).unwrap(), content="12")
+  inspect(map.path_cost([point(0, 0), point(9, 9)]) is Err(_), content="true")
+  inspect(map.path_cost([point(0, 0), point(0, 0)]) is Ok(_), content="true")
+}
+
+///|
 test "A star reports unreachable goals" {
-  let source = (
+  let source =
     #|S#G
     #|###
     #|...
-  )
   let map = parse_ascii_map(source).unwrap()
   let path = astar(map, point(0, 0), point(2, 0)).unwrap()
   debug_inspect(path, content="None")
@@ -194,10 +229,9 @@ test "A star reports unreachable goals" {
 
 ///|
 test "A star rejects blocked endpoints" {
-  let source = (
+  let source =
     #|S#G
     #|...
-  )
   let map = parse_ascii_map(source).unwrap()
   inspect(astar(map, point(1, 0), point(2, 0)) is Err(_), content="true")
   inspect(astar(map, point(0, 0), point(1, 0)) is Err(_), content="true")
@@ -205,36 +239,41 @@ test "A star rejects blocked endpoints" {
 
 ///|
 test "A star can use diagonal movement when enabled" {
-  let source = (
+  let source =
     #|S.
     #|.G
-  )
   let map = parse_ascii_map(source).unwrap()
   let path = astar(
-    map,
-    point(0, 0),
-    point(1, 1),
-    options=search_options(allow_diagonal=true),
-  ).unwrap().unwrap()
+      map,
+      point(0, 0),
+      point(1, 1),
+      options=search_options(allow_diagonal=true),
+    )
+    .unwrap()
+    .unwrap()
   inspect(path.length(), content="2")
 }
 
 ///|
 test "A star diagonal movement still respects terrain costs" {
-  let source = (
+  let source =
     #|0,9,0
     #|0,0,0
-  )
   let map = parse_csv_map_with_options(
     source,
     csv_options(terrain_costs=[terrain_cost("9", 9)]),
   ).unwrap()
   let path = astar(
-    map,
-    point(0, 0),
-    point(2, 0),
-    options=search_options(allow_diagonal=true),
-  ).unwrap().unwrap()
+      map,
+      point(0, 0),
+      point(2, 0),
+      options=search_options(allow_diagonal=true),
+    )
+    .unwrap()
+    .unwrap()
   // Direct path through (1, 0) costs 10; diagonal detour costs 2.
-  debug_inspect(path, content="[{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 0 }]")
+  debug_inspect(
+    path,
+    content="[{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 0 }]",
+  )
 }
