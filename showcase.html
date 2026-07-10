@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>moonbit-pixelkit Tactical Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101314;
+      --panel: #181d1d;
+      --panel-2: #202726;
+      --text: #edf4ed;
+      --muted: #a7b3ad;
+      --line: #34413d;
+      --floor: #2b3432;
+      --wall: #0a0d0d;
+      --range: #3e6f68;
+      --path: #f4c45f;
+      --goal-path: #8db7ff;
+      --start: #69d58c;
+      --goal: #f07b72;
+      --target: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 260px),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) 340px;
+      gap: 22px;
+      padding: 24px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      font-weight: 720;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 820px;
+    }
+
+    .mode-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      flex: none;
+    }
+
+    .mode-tabs button,
+    .toolbar button {
+      border: 0;
+      color: var(--text);
+      background: transparent;
+      border-radius: 6px;
+      min-height: 34px;
+      padding: 0 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .mode-tabs button.active,
+    .toolbar button.active,
+    .toolbar button:hover,
+    .mode-tabs button:hover {
+      background: var(--panel-2);
+    }
+
+    .board-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 38%),
+        #121716;
+      border-radius: 8px;
+      padding: 18px;
+      overflow: auto;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(34px, 5.6vw));
+      grid-auto-rows: minmax(34px, 5.6vw);
+      max-width: min(100%, 850px);
+      aspect-ratio: 12 / 7;
+      width: min(100%, 850px);
+      border: 1px solid #4a5854;
+      background: #0d1111;
+      box-shadow: 0 20px 52px rgba(0, 0, 0, 0.32);
+    }
+
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.075);
+      background: var(--floor);
+      color: var(--text);
+      font-weight: 760;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    .cell:hover {
+      filter: brightness(1.14);
+      z-index: 3;
+    }
+
+    .cell.wall {
+      cursor: default;
+      background:
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 4px, transparent 4px 9px),
+        var(--wall);
+      color: #5c6662;
+    }
+
+    .cell.range {
+      background: var(--range);
+    }
+
+    .cell.goal-path::after,
+    .cell.path::after {
+      content: "";
+      position: absolute;
+      inset: 28%;
+      border-radius: 999px;
+      background: var(--goal-path);
+      box-shadow: 0 0 0 4px rgba(141, 183, 255, 0.14);
+    }
+
+    .cell.path::after {
+      inset: 22%;
+      background: var(--path);
+      box-shadow: 0 0 0 5px rgba(244, 196, 95, 0.18);
+    }
+
+    .cell.start,
+    .cell.goal,
+    .cell.target {
+      color: #101314;
+    }
+
+    .cell.start {
+      background: var(--start);
+    }
+
+    .cell.goal {
+      background: var(--goal);
+    }
+
+    .cell.target {
+      outline: 3px solid var(--target);
+      outline-offset: -5px;
+    }
+
+    .cell span {
+      position: relative;
+      z-index: 4;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: var(--floor);
+    }
+
+    .swatch.wall { background: var(--wall); }
+    .swatch.range { background: var(--range); }
+    .swatch.path { background: var(--path); }
+    .swatch.start { background: var(--start); }
+    .swatch.goal { background: var(--goal); }
+
+    aside {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 72px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      padding: 10px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .stat-value {
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 750;
+    }
+
+    .readout {
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .readout strong {
+      color: var(--text);
+      font-weight: 680;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      white-space: pre;
+      color: #dbe6de;
+      background: #0b0f0f;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      font: 13px/1.35 "Cascadia Mono", Consolas, monospace;
+    }
+
+    @media (max-width: 940px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .title-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .board {
+        grid-template-columns: repeat(12, minmax(24px, 1fr));
+        grid-auto-rows: minmax(24px, 1fr);
+      }
+
+      .cell {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="stage" aria-label="Tactical preview">
+      <div class="title-row">
+        <div>
+          <h1>moonbit-pixelkit tactical preview</h1>
+          <div class="subtitle">
+            A browser showcase for the same map parsing, movement range, path cost, and A* route preview demonstrated by the MoonBit examples.
+          </div>
+        </div>
+        <div class="mode-tabs" aria-label="View mode">
+          <button id="modeTurn" class="active" type="button">Turn path</button>
+          <button id="modeGoal" type="button">Goal route</button>
+        </div>
+      </div>
+
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="Tactical grid"></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="legend" aria-label="Legend">
+          <span class="legend-item"><span class="swatch start"></span>Start</span>
+          <span class="legend-item"><span class="swatch goal"></span>Goal</span>
+          <span class="legend-item"><span class="swatch wall"></span>Wall</span>
+          <span class="legend-item"><span class="swatch range"></span>Reachable</span>
+          <span class="legend-item"><span class="swatch path"></span>Path</span>
+        </div>
+        <button id="resetTarget" type="button">Reset target</button>
+      </div>
+    </section>
+
+    <aside>
+      <section class="panel">
+        <h2>Movement Stats</h2>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Move budget</div>
+            <div id="budget" class="stat-value">8</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Reachable cells</div>
+            <div id="reachableCount" class="stat-value">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Turn path cost</div>
+            <div id="turnCost" class="stat-value">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Goal route cost</div>
+            <div id="goalCost" class="stat-value">0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel readout">
+        <h2>Selected Tile</h2>
+        <div><strong id="targetLabel">(6, 2)</strong></div>
+        <div id="targetStatus">Reachable this turn.</div>
+        <div>Click any open cell to preview a new movement target. Walls keep their shape so the route visibly bends around obstacles.</div>
+      </section>
+
+      <section class="panel">
+        <h2>ASCII Overlay</h2>
+        <pre id="ascii"></pre>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const rawMap = [
+      "S......#...G",
+      ".####..#....",
+      "....#.......",
+      ".##.#.####..",
+      "....#.......",
+      "..###..##...",
+      "............"
+    ];
+
+    const width = rawMap[0].length;
+    const height = rawMap.length;
+    const moveBudget = 8;
+    const start = findChar("S");
+    const goal = findChar("G");
+    const defaultTarget = { x: 6, y: 2 };
+    let target = { ...defaultTarget };
+    let mode = "turn";
+
+    const board = document.querySelector("#board");
+    const ascii = document.querySelector("#ascii");
+    const budget = document.querySelector("#budget");
+    const reachableCount = document.querySelector("#reachableCount");
+    const turnCost = document.querySelector("#turnCost");
+    const goalCost = document.querySelector("#goalCost");
+    const targetLabel = document.querySelector("#targetLabel");
+    const targetStatus = document.querySelector("#targetStatus");
+    const modeTurn = document.querySelector("#modeTurn");
+    const modeGoal = document.querySelector("#modeGoal");
+
+    document.querySelector("#resetTarget").addEventListener("click", () => {
+      target = { ...defaultTarget };
+      render();
+    });
+
+    modeTurn.addEventListener("click", () => {
+      mode = "turn";
+      render();
+    });
+
+    modeGoal.addEventListener("click", () => {
+      mode = "goal";
+      render();
+    });
+
+    function key(p) {
+      return `${p.x},${p.y}`;
+    }
+
+    function same(a, b) {
+      return a.x === b.x && a.y === b.y;
+    }
+
+    function tileAt(p) {
+      return rawMap[p.y][p.x];
+    }
+
+    function isInside(p) {
+      return p.x >= 0 && p.y >= 0 && p.x < width && p.y < height;
+    }
+
+    function isWalkable(p) {
+      return isInside(p) && tileAt(p) !== "#";
+    }
+
+    function neighbors4(p) {
+      return [
+        { x: p.x + 1, y: p.y },
+        { x: p.x - 1, y: p.y },
+        { x: p.x, y: p.y + 1 },
+        { x: p.x, y: p.y - 1 }
+      ].filter(isWalkable);
+    }
+
+    function findChar(ch) {
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          if (rawMap[y][x] === ch) {
+            return { x, y };
+          }
+        }
+      }
+      return { x: 0, y: 0 };
+    }
+
+    function bfsReachable(origin, budgetValue) {
+      const queue = [origin];
+      const costs = new Map([[key(origin), 0]]);
+      for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const current = queue[cursor];
+        const currentCost = costs.get(key(current));
+        for (const next of neighbors4(current)) {
+          const nextCost = currentCost + 1;
+          const nextKey = key(next);
+          if (nextCost <= budgetValue && (!costs.has(nextKey) || nextCost < costs.get(nextKey))) {
+            costs.set(nextKey, nextCost);
+            queue.push(next);
+          }
+        }
+      }
+      return costs;
+    }
+
+    function manhattan(a, b) {
+      return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    }
+
+    function astar(origin, destination) {
+      if (!isWalkable(origin) || !isWalkable(destination)) {
+        return [];
+      }
+      const open = [origin];
+      const closed = new Set();
+      const gScore = new Map([[key(origin), 0]]);
+      const cameFrom = new Map();
+
+      while (open.length > 0) {
+        let bestIndex = 0;
+        let bestScore = Infinity;
+        for (let i = 0; i < open.length; i += 1) {
+          const score = (gScore.get(key(open[i])) ?? Infinity) + manhattan(open[i], destination);
+          if (score < bestScore) {
+            bestScore = score;
+            bestIndex = i;
+          }
+        }
+
+        const current = open.splice(bestIndex, 1)[0];
+        if (same(current, destination)) {
+          return reconstructPath(cameFrom, current);
+        }
+
+        closed.add(key(current));
+        for (const next of neighbors4(current)) {
+          const nextKey = key(next);
+          if (closed.has(nextKey)) {
+            continue;
+          }
+          const tentative = (gScore.get(key(current)) ?? Infinity) + 1;
+          if (tentative < (gScore.get(nextKey) ?? Infinity)) {
+            cameFrom.set(nextKey, current);
+            gScore.set(nextKey, tentative);
+            if (!open.some((item) => same(item, next))) {
+              open.push(next);
+            }
+          }
+        }
+      }
+
+      return [];
+    }
+
+    function reconstructPath(cameFrom, current) {
+      const path = [current];
+      while (cameFrom.has(key(current))) {
+        current = cameFrom.get(key(current));
+        path.push(current);
+      }
+      return path.reverse();
+    }
+
+    function pathCost(path) {
+      return Math.max(0, path.length - 1);
+    }
+
+    function render() {
+      const reachable = bfsReachable(start, moveBudget);
+      const turnPath = astar(start, target);
+      const goalPath = astar(start, goal);
+      const path = mode === "turn" ? turnPath : goalPath;
+      const pathKeys = new Set(path.map(key));
+      const goalPathKeys = new Set(goalPath.map(key));
+      board.replaceChildren();
+
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const p = { x, y };
+          const ch = tileAt(p);
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell";
+          cell.setAttribute("aria-label", `Cell ${x}, ${y}`);
+          if (ch === "#") cell.classList.add("wall");
+          if (reachable.has(key(p)) && ch !== "S" && ch !== "G") cell.classList.add("range");
+          if (goalPathKeys.has(key(p)) && mode === "goal") cell.classList.add("goal-path");
+          if (pathKeys.has(key(p))) cell.classList.add("path");
+          if (same(p, start)) cell.classList.add("start");
+          if (same(p, goal)) cell.classList.add("goal");
+          if (same(p, target)) cell.classList.add("target");
+          cell.innerHTML = `<span>${labelFor(p, ch)}</span>`;
+          if (isWalkable(p)) {
+            cell.addEventListener("click", () => {
+              target = p;
+              mode = "turn";
+              render();
+            });
+          }
+          board.appendChild(cell);
+        }
+      }
+
+      budget.textContent = String(moveBudget);
+      reachableCount.textContent = String(reachable.size);
+      turnCost.textContent = reachable.has(key(target)) ? String(pathCost(turnPath)) : "-";
+      goalCost.textContent = String(pathCost(goalPath));
+      targetLabel.textContent = `(${target.x}, ${target.y})`;
+      targetStatus.textContent = reachable.has(key(target))
+        ? "Reachable this turn."
+        : "Outside this turn's movement range.";
+      modeTurn.classList.toggle("active", mode === "turn");
+      modeGoal.classList.toggle("active", mode === "goal");
+      ascii.textContent = renderAscii(reachable, pathKeys);
+    }
+
+    function labelFor(p, ch) {
+      if (same(p, start)) return "S";
+      if (same(p, goal)) return "G";
+      if (same(p, target)) return "T";
+      if (ch === "#") return "";
+      return "";
+    }
+
+    function renderAscii(reachable, pathKeys) {
+      const rows = [];
+      for (let y = 0; y < height; y += 1) {
+        let row = "";
+        for (let x = 0; x < width; x += 1) {
+          const p = { x, y };
+          const ch = tileAt(p);
+          if (same(p, start)) row += "S";
+          else if (same(p, goal)) row += "G";
+          else if (pathKeys.has(key(p))) row += "*";
+          else if (ch === "#") row += "#";
+          else if (reachable.has(key(p))) row += "+";
+          else row += ".";
+        }
+        rows.push(row);
+      }
+      return rows.join("\n");
+    }
+
+    render();
+  </script>
+</body>
+</html>

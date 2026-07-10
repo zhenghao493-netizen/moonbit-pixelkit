@@ -6,6 +6,14 @@ A MoonBit toolkit for 2D pixel game map parsing and pathfinding.
 
 ## Showcase
 
+Open the browser showcase:
+
+```text
+showcase.html
+```
+
+The page renders the same tactical movement preview as a color grid. Click an open tile to preview a new target, or switch between the current-turn route and the full route to the goal.
+
 Run the tactical preview:
 
 ```bash
@@ -69,6 +77,7 @@ The repository currently includes the minimum assets expected for a reusable Moo
 - project proposal document: `moonbit-pixelkit-project-proposal.md`
 - acceptance guide: `ACCEPTANCE.md`
 - changelog: `CHANGELOG.md`
+- browser showcase: `showcase.html`
 
 ## Quick Start
 
@@ -99,6 +108,7 @@ moon package
 
 See [ACCEPTANCE.md](ACCEPTANCE.md) for reviewer-oriented verification notes.
 See [CHANGELOG.md](CHANGELOG.md) for release notes.
+Open `showcase.html` for a browser-based visual preview.
 
 ## Example
 

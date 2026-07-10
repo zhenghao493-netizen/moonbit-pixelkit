@@ -21,6 +21,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - `CHANGELOG.md` with the `0.1.0` release candidate notes.
 - `LICENSE` using MIT.
 - `.github/workflows/ci.yml` running `moon check` and `moon test`.
+- `showcase.html` with a browser-based tactical movement preview.
 - Runnable examples under `examples/`.
 - Unit tests covering parser, map query, named point lookup, reachability, A*, path cost summaries, rendering, and error paths.
 
@@ -48,6 +49,7 @@ Expected baseline:
 - Each example prints a short terminal result without requiring network access.
 - `examples/turn_based_movement` demonstrates game-style movement range and path planning in one run.
 - `examples/tactical_preview` demonstrates the strongest reviewer-facing output: map rendering, movement range, a selected route, and a full route to the goal.
+- `showcase.html` opens as a standalone browser preview for the same tactical movement story.
 
 ## Feature Coverage
 

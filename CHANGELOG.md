@@ -11,6 +11,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Added `TileMap::path_cost` for movement-cost summaries.
 - Added `TileMap::render_ascii_overlay` for reachable-cell and path debug views.
 - Added `examples/tactical_preview`, a reviewer-facing showcase for tactical movement range and route previews.
+- Added `showcase.html`, a standalone browser preview for tactical movement and route visualization.
 
 ## 0.1.0 - 2026-07-08
 
