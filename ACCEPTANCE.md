@@ -38,6 +38,7 @@ moon run examples/reachable_area
 moon run examples/weighted_grid
 moon run examples/game_loop_stub
 moon run examples/turn_based_movement
+moon run examples/tactical_preview
 ```
 
 Expected baseline:
@@ -46,6 +47,7 @@ Expected baseline:
 - `moon package` creates a package archive under `_build/publish/`.
 - Each example prints a short terminal result without requiring network access.
 - `examples/turn_based_movement` demonstrates game-style movement range and path planning in one run.
+- `examples/tactical_preview` demonstrates the strongest reviewer-facing output: map rendering, movement range, a selected route, and a full route to the goal.
 
 ## Feature Coverage
 

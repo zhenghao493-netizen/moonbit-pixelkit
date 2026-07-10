@@ -4,6 +4,42 @@ A MoonBit toolkit for 2D pixel game map parsing and pathfinding.
 
 `moonbit-pixelkit` is built for small 2D pixel games, grid-based demos, and algorithm teaching examples. It provides a compact tile map model, ASCII/CSV map parsers, walkability queries, BFS reachability, and A* path search.
 
+## Showcase
+
+Run the tactical preview:
+
+```bash
+moon run examples/tactical_preview
+```
+
+It renders a battlefield, the cells an actor can reach this turn, and the planned path:
+
+```text
+moonbit-pixelkit tactical preview
+
+Legend: S actor, G goal, # wall, + reachable this turn, * planned path
+
+Turn 1 movement range, budget 8:
+S++++++#...G
++####++#....
++++#++.....
++##+#+####..
++++#.......
+++###..##...
++++.........
+
+Selected target: (6, 2)
+Selected target reachable: true
+This-turn path cost: 8
+S******#...G
++####+*#....
++++#+*.....
++##+#+####..
++++#.......
+++###..##...
++++.........
+```
+
 ## Status
 
 This project is being developed for the 2026 MoonBit open-source ecosystem contest. The current milestone focuses on a small but usable core package:
@@ -18,7 +54,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - start/goal lookup helpers
 - path movement-cost summaries
 - ASCII overlays for reachable cells and planned paths
-- game-style examples for pathfinding and turn-based movement
+- game-style examples for pathfinding, turn previews, and tactical movement
 - CI with `moon check` and `moon test`
 
 ## Acceptance Checklist
@@ -52,6 +88,7 @@ moon run examples/reachable_area
 moon run examples/weighted_grid
 moon run examples/game_loop_stub
 moon run examples/turn_based_movement
+moon run examples/tactical_preview
 ```
 
 Build the publish archive:
@@ -159,6 +196,7 @@ moon run examples/reachable_area
 moon run examples/weighted_grid
 moon run examples/game_loop_stub
 moon run examples/turn_based_movement
+moon run examples/tactical_preview
 moon package
 ```
 
