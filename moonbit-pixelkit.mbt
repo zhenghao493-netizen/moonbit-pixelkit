@@ -44,6 +44,13 @@ pub struct TerrainCost {
 } derive(Eq, Debug)
 
 ///|
+/// A walkable point reached by BFS together with its accumulated movement cost.
+pub struct ReachableCell {
+  point : Point
+  cost : Int
+} derive(Eq, Debug)
+
+///|
 /// Options for CSV map parsing.
 pub struct CsvOptions {
   wall_ids : Array[String]
@@ -201,6 +208,18 @@ pub fn Tile::is_wall(self : Tile) -> Bool {
 ///|
 /// Return the tile movement cost.
 pub fn Tile::cost(self : Tile) -> Int {
+  self.cost
+}
+
+///|
+/// Return the reached point.
+pub fn ReachableCell::point(self : ReachableCell) -> Point {
+  self.point
+}
+
+///|
+/// Return the accumulated movement cost from the BFS start point.
+pub fn ReachableCell::cost(self : ReachableCell) -> Int {
   self.cost
 }
 
@@ -496,6 +515,26 @@ pub fn bfs_reachable(
   max_cost : Int,
   options? : SearchOptions = SearchOptions::default(),
 ) -> Result[Array[Point], String] {
+  match bfs_reachable_with_costs(map, start, max_cost, options~) {
+    Err(message) => Err(message)
+    Ok(cells) => {
+      let points : Array[Point] = []
+      for cell in cells {
+        points.push(cell.point)
+      }
+      Ok(points)
+    }
+  }
+}
+
+///|
+/// Return all walkable cells reachable from `start`, including accumulated cost.
+pub fn bfs_reachable_with_costs(
+  map : TileMap,
+  start : Point,
+  max_cost : Int,
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[Array[ReachableCell], String] {
   if max_cost < 0 {
     return Err("max_cost must be non-negative")
   }
@@ -524,10 +563,10 @@ pub fn bfs_reachable(
       }
     }
   }
-  let reachable : Array[Point] = []
+  let reachable : Array[ReachableCell] = []
   for index in 0..<size {
     if cost[index] >= 0 {
-      reachable.push(map.point_from_index(index))
+      reachable.push({ point: map.point_from_index(index), cost: cost[index] })
     }
   }
   Ok(reachable)

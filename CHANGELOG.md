@@ -10,6 +10,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Added `TileMap::first_point_with_id` and `TileMap::single_point_with_id` for named marker lookup.
 - Added `TileMap::path_cost` for movement-cost summaries.
 - Added `TileMap::render_ascii_overlay` for reachable-cell and path debug views.
+- Added `ReachableCell` and `bfs_reachable_with_costs` for movement range previews that need per-cell accumulated costs.
 - Added `examples/tactical_preview`, a reviewer-facing showcase for tactical movement range and route previews.
 - Added `showcase.html`, a standalone browser preview for tactical movement and route visualization.
 

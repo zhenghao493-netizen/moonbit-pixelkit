@@ -142,6 +142,29 @@ test "BFS reachable respects walls and movement budget" {
 }
 
 ///|
+test "BFS reachable with costs reports accumulated movement cost" {
+  let source =
+    #|0,2,3
+    #|0,0,0
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("2", 4), terrain_cost("3", 8)]),
+  ).unwrap()
+  let reachable = bfs_reachable_with_costs(map, point(0, 0), 5).unwrap()
+  inspect(reachable.length(), content="5")
+  debug_inspect(reachable[0].point(), content="{ x: 0, y: 0 }")
+  inspect(reachable[0].cost(), content="0")
+  debug_inspect(reachable[1].point(), content="{ x: 1, y: 0 }")
+  inspect(reachable[1].cost(), content="4")
+  debug_inspect(reachable[2].point(), content="{ x: 0, y: 1 }")
+  inspect(reachable[2].cost(), content="1")
+  inspect(
+    reachable.map(cell => cell.point()).contains(point(2, 0)),
+    content="false",
+  )
+}
+
+///|
 test "BFS rejects invalid starts and budgets" {
   let source =
     #|S#
