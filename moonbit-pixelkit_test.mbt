@@ -165,6 +165,57 @@ test "BFS reachable with costs reports accumulated movement cost" {
 }
 
 ///|
+test "movement preview combines range target cost and path" {
+  let source =
+    #|0,2,3
+    #|0,0,0
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("2", 4), terrain_cost("3", 8)]),
+  ).unwrap()
+  let preview = movement_preview(map, point(0, 0), point(1, 0), 5).unwrap()
+  debug_inspect(preview.start(), content="{ x: 0, y: 0 }")
+  debug_inspect(preview.target(), content="{ x: 1, y: 0 }")
+  inspect(preview.max_cost(), content="5")
+  inspect(preview.reachable().length(), content="5")
+  inspect(preview.reachable_points().contains(point(0, 1)), content="true")
+  inspect(preview.target_reachable(), content="true")
+  debug_inspect(preview.target_cost(), content="Some(4)")
+  debug_inspect(preview.path_cost(), content="Some(4)")
+  debug_inspect(
+    preview.path().unwrap(),
+    content="[{ x: 0, y: 0 }, { x: 1, y: 0 }]",
+  )
+}
+
+///|
+test "movement preview reports targets outside budget without a path" {
+  let source =
+    #|0,2,3
+    #|0,0,0
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("2", 4), terrain_cost("3", 8)]),
+  ).unwrap()
+  let preview = movement_preview(map, point(0, 0), point(2, 0), 5).unwrap()
+  inspect(preview.target_reachable(), content="false")
+  debug_inspect(preview.target_cost(), content="None")
+  debug_inspect(preview.path(), content="None")
+}
+
+///|
+test "movement preview rejects blocked targets" {
+  let source =
+    #|S#
+    #|.G
+  let map = parse_ascii_map(source).unwrap()
+  inspect(
+    movement_preview(map, point(0, 0), point(1, 0), 2) is Err(_),
+    content="true",
+  )
+}
+
+///|
 test "BFS rejects invalid starts and budgets" {
   let source =
     #|S#

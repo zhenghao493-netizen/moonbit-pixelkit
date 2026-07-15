@@ -51,6 +51,17 @@ pub struct ReachableCell {
 } derive(Eq, Debug)
 
 ///|
+/// A complete movement preview for selecting a target in a grid game.
+pub struct MovementPreview {
+  start : Point
+  target : Point
+  max_cost : Int
+  reachable : Array[ReachableCell]
+  target_cost : Int?
+  path : Array[Point]?
+} derive(Debug)
+
+///|
 /// Options for CSV map parsing.
 pub struct CsvOptions {
   wall_ids : Array[String]
@@ -221,6 +232,68 @@ pub fn ReachableCell::point(self : ReachableCell) -> Point {
 /// Return the accumulated movement cost from the BFS start point.
 pub fn ReachableCell::cost(self : ReachableCell) -> Int {
   self.cost
+}
+
+///|
+/// Return the movement preview start point.
+pub fn MovementPreview::start(self : MovementPreview) -> Point {
+  self.start
+}
+
+///|
+/// Return the selected target point.
+pub fn MovementPreview::target(self : MovementPreview) -> Point {
+  self.target
+}
+
+///|
+/// Return the movement budget used for this preview.
+pub fn MovementPreview::max_cost(self : MovementPreview) -> Int {
+  self.max_cost
+}
+
+///|
+/// Return reachable cells and their accumulated costs.
+pub fn MovementPreview::reachable(
+  self : MovementPreview,
+) -> Array[ReachableCell] {
+  self.reachable
+}
+
+///|
+/// Return only the points from the reachable cells, useful for rendering.
+pub fn MovementPreview::reachable_points(
+  self : MovementPreview,
+) -> Array[Point] {
+  let points : Array[Point] = []
+  for cell in self.reachable {
+    points.push(cell.point)
+  }
+  points
+}
+
+///|
+/// Return whether the target can be reached within the movement budget.
+pub fn MovementPreview::target_reachable(self : MovementPreview) -> Bool {
+  self.target_cost is Some(_)
+}
+
+///|
+/// Return the target's accumulated movement cost when it is reachable.
+pub fn MovementPreview::target_cost(self : MovementPreview) -> Int? {
+  self.target_cost
+}
+
+///|
+/// Return the planned path cost when the target is reachable within the budget.
+pub fn MovementPreview::path_cost(self : MovementPreview) -> Int? {
+  self.target_cost
+}
+
+///|
+/// Return the planned path when the target is reachable within the budget.
+pub fn MovementPreview::path(self : MovementPreview) -> Array[Point]? {
+  self.path
 }
 
 ///|
@@ -570,6 +643,57 @@ pub fn bfs_reachable_with_costs(
     }
   }
   Ok(reachable)
+}
+
+///|
+/// Build a game-style movement preview for a selected target.
+pub fn movement_preview(
+  map : TileMap,
+  start : Point,
+  target : Point,
+  max_cost : Int,
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[MovementPreview, String] {
+  if !map.is_walkable(target) {
+    return Err("target is not walkable")
+  }
+  match bfs_reachable_with_costs(map, start, max_cost, options~) {
+    Err(message) => Err(message)
+    Ok(reachable) => {
+      let mut target_cost : Int? = None
+      for cell in reachable {
+        if cell.point == target {
+          target_cost = Some(cell.cost)
+        }
+      }
+      match target_cost {
+        None =>
+          Ok({
+            start,
+            target,
+            max_cost,
+            reachable,
+            target_cost: None,
+            path: None,
+          })
+        Some(_) =>
+          match astar(map, start, target, options~) {
+            Err(message) => Err(message)
+            Ok(None) =>
+              Ok({ start, target, max_cost, reachable, target_cost, path: None })
+            Ok(Some(path)) =>
+              Ok({
+                start,
+                target,
+                max_cost,
+                reachable,
+                target_cost,
+                path: Some(path),
+              })
+          }
+      }
+    }
+  }
 }
 
 ///|

@@ -61,6 +61,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - A* path search
 - start/goal lookup helpers
 - path movement-cost summaries
+- high-level movement previews for tactical target selection
 - ASCII overlays for reachable cells and planned paths
 - game-style examples for pathfinding, turn previews, and tactical movement
 - CI with `moon check` and `moon test`
@@ -142,6 +143,7 @@ println("path length: \{path.length()}")
 - `neighbors8(point)` returns cardinal plus diagonal neighbors.
 - `bfs_reachable(map, start, max_cost, options~)` returns reachable cells.
 - `bfs_reachable_with_costs(map, start, max_cost, options~)` returns reachable cells with accumulated movement costs.
+- `movement_preview(map, start, target, max_cost, options~)` returns range, target reachability, target cost, and target path in one call.
 - `astar(map, start, goal, options~)` returns a path or `None`.
 
 ## Turn-Based Movement Use Case
@@ -158,10 +160,11 @@ println("path length: \{path.length()}")
 let map = parse_ascii_map(source).unwrap()
 let actor = map.single_point_with_id("start").unwrap()
 let target = point(4, 1)
-let reachable = bfs_reachable(map, actor, 5).unwrap()
-let path = astar(map, actor, target).unwrap().unwrap()
+let preview = movement_preview(map, actor, target, 5).unwrap()
+let reachable = preview.reachable_points()
+let path = preview.path().unwrap()
 
-println("cost: \{map.path_cost(path).unwrap()}")
+println("cost: \{preview.path_cost().unwrap()}")
 println(map.render_ascii_overlay(reachable=reachable, path=path))
 ```
 
