@@ -1,0 +1,5 @@
+import {
+  "ttxiangshang/moonbit-pixelkit" @pixelkit,
+}
+
+pkgtype(kind: "executable")

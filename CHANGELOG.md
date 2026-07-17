@@ -2,6 +2,13 @@
 
 All notable changes to `moonbit-pixelkit` are documented here.
 
+## Unreleased
+
+### Added
+
+- Added `parse_tiled_json` and `tiled_options` for importing orthogonal, uncompressed Tiled JSON maps with configurable collision and terrain layers.
+- Added `examples/tiled_tactical_preview` to demonstrate editor-exported map import feeding a weighted movement preview.
+
 ## 0.1.1 - 2026-07-17
 
 ### Added

@@ -121,6 +121,52 @@ test "CSV parser accepts CRLF and trailing newline" {
 }
 
 ///|
+test "Tiled JSON parser imports collision and terrain layers" {
+  let source =
+    #|{
+    #|  "orientation": "orthogonal",
+    #|  "width": 3,
+    #|  "height": 2,
+    #|  "layers": [
+    #|    { "name": "Collision", "type": "tilelayer", "data": [0, 1, 0, 0, 0, 0] },
+    #|    { "name": "Terrain", "type": "tilelayer", "data": [0, 0, 3, 0, 2, 0] }
+    #|  ]
+    #|}
+  let options = tiled_options(terrain_layer=Some("Terrain"), terrain_costs=[
+    terrain_cost("2", 4),
+    terrain_cost("3", 8),
+  ])
+  let map = parse_tiled_json(source, options~).unwrap()
+  inspect(map.width(), content="3")
+  inspect(map.height(), content="2")
+  inspect(map.is_walkable(point(1, 0)), content="false")
+  inspect(map.tile_at(point(2, 0)).unwrap().id(), content="3")
+  debug_inspect(map.movement_cost(point(2, 0)), content="Some(8)")
+  debug_inspect(map.movement_cost(point(1, 1)), content="Some(4)")
+}
+
+///|
+test "Tiled JSON parser rejects unsupported maps and malformed layers" {
+  let isometric =
+    #|{
+    #|  "orientation": "isometric",
+    #|  "width": 1,
+    #|  "height": 1,
+    #|  "layers": [{ "name": "Collision", "type": "tilelayer", "data": [0] }]
+    #|}
+  let wrong_size =
+    #|{
+    #|  "width": 2,
+    #|  "height": 1,
+    #|  "layers": [{ "name": "Collision", "type": "tilelayer", "data": [0] }]
+    #|}
+  inspect(parse_tiled_json(isometric) is Err(_), content="true")
+  inspect(parse_tiled_json(wrong_size) is Err(_), content="true")
+  inspect(parse_tiled_json("{}") is Err(_), content="true")
+  inspect(parse_tiled_json("{ invalid JSON") is Err(_), content="true")
+}
+
+///|
 test "neighbors helpers" {
   inspect(neighbors4(point(2, 2)).length(), content="4")
   inspect(neighbors8(point(2, 2)).length(), content="8")

@@ -2,7 +2,7 @@
 
 A MoonBit toolkit for 2D pixel game map parsing and pathfinding.
 
-`moonbit-pixelkit` is built for small 2D pixel games, grid-based demos, and algorithm teaching examples. It provides a compact tile map model, ASCII/CSV map parsers, walkability queries, BFS reachability, and A* path search.
+`moonbit-pixelkit` is built for small 2D pixel games, grid-based demos, and algorithm teaching examples. It provides a compact tile map model, ASCII/CSV/Tiled JSON import, walkability queries, Dijkstra reachability, and A* path search.
 
 ## Showcase
 
@@ -55,6 +55,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 
 - rectangular ASCII map parsing
 - CSV tile map parsing
+- orthogonal Tiled JSON import with collision and terrain layers
 - tile lookup and walkability checks
 - movement costs
 - four-way and eight-way neighbor helpers
@@ -74,7 +75,7 @@ The repository currently includes the minimum assets expected for a reusable Moo
 - public repository with MIT license
 - MoonBit module metadata in `moon.mod`
 - runnable examples under `examples/`
-- unit tests for parser behavior, map queries, reachability, A*, diagonal movement, and error paths
+- unit tests for parser behavior, map queries, weighted reachability, A*, diagonal movement, Tiled JSON import, and error paths
 - GitHub Actions workflow for `moon check`, `moon build`, and `moon test`
 - project proposal document: `moonbit-pixelkit-project-proposal.md`
 - acceptance guide: `ACCEPTANCE.md`
@@ -125,6 +126,7 @@ moon run examples/weighted_grid
 moon run examples/game_loop_stub
 moon run examples/turn_based_movement
 moon run examples/tactical_preview
+moon run examples/tiled_tactical_preview
 ```
 
 Build the publish archive:
@@ -157,6 +159,8 @@ println("path length: \{path.length()}")
 - `point(x, y)` creates a `Point`.
 - `parse_ascii_map(text, options~)` parses `#`, `.`, `S`, and `G` maps by default.
 - `parse_csv_map(text)` parses CSV tile ids; `1` is treated as a wall.
+- `parse_tiled_json(text, options~)` imports an orthogonal, uncompressed Tiled JSON map from named collision and optional terrain layers.
+- `tiled_options(...)` configures Tiled collision GIDs, terrain layer, and movement-cost mapping.
 - `TileMap::in_bounds(point)` checks map bounds.
 - `TileMap::tile_at(point)` returns a tile when the coordinate is valid.
 - `TileMap::is_walkable(point)` returns whether movement is allowed.
@@ -178,7 +182,7 @@ println("path length: \{path.length()}")
 
 `moonbit-pixelkit` is designed to cover a compact tactical-game loop:
 
-1. Parse an ASCII or CSV grid.
+1. Parse an ASCII, CSV, or Tiled JSON grid.
 2. Find named points such as `start` and `goal`.
 3. Compute the cells an actor can reach this turn.
 4. Plan a path to a selected target.
@@ -197,12 +201,32 @@ println("steps: \{map.validate_path(path).unwrap().steps()}")
 println(map.render_ascii_overlay(reachable=reachable, path=path))
 ```
 
+## Tiled JSON Import
+
+Export an orthogonal map from Tiled using its JSON format with inline tile-layer data. By default, the importer reads a `Collision` layer and treats gid `1` as a wall. Configure a second terrain layer when individual GIDs carry movement costs:
+
+```moonbit
+let options = tiled_options(
+  terrain_layer=Some("Terrain"),
+  terrain_costs=[terrain_cost("2", 3), terrain_cost("3", 5)],
+)
+let map = parse_tiled_json(tiled_json, options~).unwrap()
+```
+
+Run the complete import-to-movement-preview example:
+
+```bash
+moon run examples/tiled_tactical_preview
+```
+
+This intentionally supports the portable core of Tiled JSON: orthogonal maps, named `tilelayer` entries, and uncompressed inline integer `data` arrays. Infinite maps, chunked layers, encoded/compressed data, TMX, and image assets remain outside the package boundary.
+
 ## Roadmap
 
 - Structured parse and pathfinding error types.
 - Additional gameplay helpers for turn previews and editor tooling.
 - More package examples after the next Mooncakes release.
-- Optional Tiled JSON import experiments after the core API settles.
+- Broader Tiled import support such as chunked layers and encoded data, based on real user demand.
 
 ## Release
 
@@ -210,7 +234,7 @@ Version `0.1.1` is published on Mooncakes:
 
 https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
 
-The main branch contains the current published package.
+The `v0.1.1` tag matches the current Mooncakes release; the main branch may additionally contain unreleased improvements.
 
 Local packaging is verified with:
 

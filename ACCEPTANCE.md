@@ -11,7 +11,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - License: MIT
 - Main language: MoonBit
 
-`moonbit-pixelkit` provides a small reusable core for grid-based games and demos: ASCII/CSV map parsing, tile queries, walkability checks, movement costs, named point lookup, Dijkstra reachable-area search with accumulated costs, high-level movement previews, A* pathfinding, path validation, path cost summaries, and ASCII debug rendering.
+`moonbit-pixelkit` provides a small reusable core for grid-based games and demos: ASCII/CSV/Tiled JSON map import, tile queries, walkability checks, movement costs, named point lookup, Dijkstra reachable-area search with accumulated costs, high-level movement previews, A* pathfinding, path validation, path cost summaries, and ASCII debug rendering.
 
 ## Initial Review Assets
 
@@ -20,7 +20,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - `moonbit-pixelkit-project-proposal.md` with the project proposal.
 - `CHANGELOG.md` with the published `0.1.1` release notes.
 - `LICENSE` using MIT.
-- `.github/workflows/ci.yml` running `moon check` and `moon test`.
+- `.github/workflows/ci.yml` running formatting, `moon check`, `moon build`, `moon test`, and package-metadata verification.
 - `showcase.html` with a browser-based tactical movement preview.
 - Runnable examples under `examples/`.
 - Unit tests covering parser, map query, named point lookup, reachability with costs, movement previews, A*, path cost summaries, rendering, and error paths.
@@ -41,6 +41,7 @@ moon run examples/weighted_grid
 moon run examples/game_loop_stub
 moon run examples/turn_based_movement
 moon run examples/tactical_preview
+moon run examples/tiled_tactical_preview
 ```
 
 Expected baseline:
@@ -50,6 +51,7 @@ Expected baseline:
 - Each example prints a short terminal result without requiring network access.
 - `examples/turn_based_movement` demonstrates game-style movement range and path planning in one run.
 - `examples/tactical_preview` demonstrates the strongest reviewer-facing output: map rendering, movement range, a selected route, and a full route to the goal.
+- `examples/tiled_tactical_preview` demonstrates importing an editor-exported Tiled JSON map into a weighted movement preview.
 - `showcase.html` opens as a standalone browser preview for the same tactical movement story.
 
 ## Feature Coverage
@@ -57,6 +59,7 @@ Expected baseline:
 - `parse_ascii_map` parses rectangular ASCII maps using `#`, `.`, `S`, and `G` by default.
 - `parse_csv_map` parses CSV tile ids, with `1` treated as a wall by default.
 - `parse_csv_map_with_options` supports configurable wall ids and terrain costs.
+- `parse_tiled_json` imports orthogonal Tiled JSON maps with inline tile-layer data, a configurable collision layer, optional terrain layer, and GID-to-cost mapping.
 - `TileMap` supports dimensions, bounds checks, tile lookup, movement costs, id lookup, and ASCII rendering.
 - `TileMap::single_point_with_id` validates maps that should contain exactly one start or goal marker.
 - `TileMap::path_cost` sums the movement cost of a planned route for game-style turn previews.
@@ -71,7 +74,7 @@ Expected baseline:
 ## Known Boundaries
 
 - The package intentionally targets small to medium grid maps for games, demos, and teaching examples.
-- PNG, TMX, and Tiled JSON parsing are not included in the current milestone.
+- Tiled JSON support deliberately covers orthogonal maps with inline, uncompressed layer data; PNG, TMX, infinite/chunked maps, and encoded or compressed layer data are not included.
 - Mooncakes publication is complete for version `0.1.1`.
 
 ## Publication Status

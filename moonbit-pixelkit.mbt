@@ -94,6 +94,16 @@ pub struct CsvOptions {
 } derive(Debug)
 
 ///|
+/// Options for importing an orthogonal, uncompressed Tiled JSON map.
+pub struct TiledOptions {
+  collision_layer : String
+  terrain_layer : String?
+  wall_gids : Array[Int]
+  terrain_costs : Array[TerrainCost]
+  default_cost : Int
+} derive(Debug)
+
+///|
 /// Default ASCII conventions: `#` walls, `.` floors, `S` start, `G` goal.
 pub fn AsciiOptions::default() -> AsciiOptions {
   { wall: '#', floor: '.', start: 'S', goal: 'G' }
@@ -109,6 +119,18 @@ pub fn SearchOptions::default() -> SearchOptions {
 /// Default CSV conventions: tile id `1` is a wall and other ids cost 1.
 pub fn CsvOptions::default() -> CsvOptions {
   { wall_ids: ["1"], terrain_costs: [], default_cost: 1 }
+}
+
+///|
+/// Default Tiled conventions: a `Collision` layer with gid `1` as walls.
+pub fn TiledOptions::default() -> TiledOptions {
+  {
+    collision_layer: "Collision",
+    terrain_layer: None,
+    wall_gids: [1],
+    terrain_costs: [],
+    default_cost: 1,
+  }
 }
 
 ///|
@@ -134,6 +156,18 @@ pub fn csv_options(
   default_cost? : Int = 1,
 ) -> CsvOptions {
   { wall_ids, terrain_costs, default_cost }
+}
+
+///|
+/// Create Tiled JSON import options for collision and optional terrain layers.
+pub fn tiled_options(
+  collision_layer? : String = "Collision",
+  terrain_layer? : String? = None,
+  wall_gids? : Array[Int] = [1],
+  terrain_costs? : Array[TerrainCost] = [],
+  default_cost? : Int = 1,
+) -> TiledOptions {
+  { collision_layer, terrain_layer, wall_gids, terrain_costs, default_cost }
 }
 
 ///|
@@ -468,6 +502,199 @@ pub fn parse_csv_map_with_options(
     }
   }
   Ok({ width, height: rows.length(), tiles })
+}
+
+///|
+fn TiledOptions::cost_for_gid(self : TiledOptions, gid : Int) -> Int {
+  let id = gid.to_string()
+  for item in self.terrain_costs {
+    if item.id == id {
+      return item.cost
+    }
+  }
+  self.default_cost
+}
+
+///|
+fn tiled_required(
+  object : Map[String, Json],
+  key : String,
+) -> Result[Json, String] {
+  match object.get(key) {
+    Some(value) => Ok(value)
+    None => Err("Tiled JSON is missing '\{key}'")
+  }
+}
+
+///|
+fn tiled_int(value : Json, label : String) -> Result[Int, String] {
+  try {
+    let decoded : Int = @json.from_json(value)
+    Ok(decoded)
+  } catch {
+    _ => Err("Tiled '\{label}' must be an integer")
+  }
+}
+
+///|
+fn tiled_string(value : Json, label : String) -> Result[String, String] {
+  match value {
+    String(text) => Ok(text)
+    _ => Err("Tiled '\{label}' must be a string")
+  }
+}
+
+///|
+fn tiled_int_array(value : Json, label : String) -> Result[Array[Int], String] {
+  try {
+    let decoded : Array[Int] = @json.from_json(value)
+    Ok(decoded)
+  } catch {
+    _ => Err("Tiled '\{label}' must be an integer array")
+  }
+}
+
+///|
+fn tiled_layer_data(
+  layers : Array[Json],
+  name : String,
+  expected_size : Int,
+) -> Result[Array[Int], String] {
+  for layer in layers {
+    match layer {
+      Object(object) => {
+        let name_value = match tiled_required(object, "name") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        let layer_name = match tiled_string(name_value, "layers[].name") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        if layer_name == name {
+          let type_value = match tiled_required(object, "type") {
+            Err(message) => return Err(message)
+            Ok(value) => value
+          }
+          let layer_type = match tiled_string(type_value, "layers[].type") {
+            Err(message) => return Err(message)
+            Ok(value) => value
+          }
+          if layer_type != "tilelayer" {
+            return Err("Tiled layer '\{name}' is not a tilelayer")
+          }
+          let data_value = match tiled_required(object, "data") {
+            Err(message) => return Err(message)
+            Ok(value) => value
+          }
+          let data = match tiled_int_array(data_value, "layers[].data") {
+            Err(message) => return Err(message)
+            Ok(value) => value
+          }
+          if data.length() != expected_size {
+            return Err(
+              "Tiled layer '\{name}' has \{data.length()} cells, expected \{expected_size}",
+            )
+          }
+          return Ok(data)
+        }
+      }
+      _ => return Err("Tiled layers must be objects")
+    }
+  }
+  Err("Tiled layer '\{name}' was not found")
+}
+
+///|
+/// Parse an orthogonal, uncompressed Tiled JSON map with collision and terrain layers.
+pub fn parse_tiled_json(
+  input : String,
+  options? : TiledOptions = TiledOptions::default(),
+) -> Result[TileMap, String] {
+  if options.default_cost <= 0 {
+    return Err("default_cost must be positive")
+  }
+  for item in options.terrain_costs {
+    if item.cost <= 0 {
+      return Err("terrain cost for '\{item.id}' must be positive")
+    }
+  }
+  try {
+    let root = @json.parse(input)
+    match root {
+      Object(object) => {
+        let width_value = match tiled_required(object, "width") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        let height_value = match tiled_required(object, "height") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        let layers_value = match tiled_required(object, "layers") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        let width = match tiled_int(width_value, "width") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        let height = match tiled_int(height_value, "height") {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        if width <= 0 || height <= 0 {
+          return Err("Tiled width and height must be positive")
+        }
+        match object.get("orientation") {
+          Some(value) => {
+            let orientation = match tiled_string(value, "orientation") {
+              Err(message) => return Err(message)
+              Ok(value) => value
+            }
+            if orientation != "orthogonal" {
+              return Err("only orthogonal Tiled maps are supported")
+            }
+          }
+          None => ()
+        }
+        let layers = match layers_value {
+          Array(items) => items
+          _ => return Err("Tiled 'layers' must be an array")
+        }
+        let size = width * height
+        let collision = match
+          tiled_layer_data(layers, options.collision_layer, size) {
+          Err(message) => return Err(message)
+          Ok(value) => value
+        }
+        let terrain : Array[Int]? = match options.terrain_layer {
+          None => None
+          Some(name) =>
+            match tiled_layer_data(layers, name, size) {
+              Err(message) => return Err(message)
+              Ok(data) => Some(data)
+            }
+        }
+        let tiles : Array[Tile] = []
+        for index in 0..<size {
+          let collision_gid = collision[index]
+          let terrain_gid = match terrain {
+            None => collision_gid
+            Some(data) => data[index]
+          }
+          let is_wall = options.wall_gids.contains(collision_gid)
+          let id = terrain_gid.to_string()
+          let cost = if is_wall { 0 } else { options.cost_for_gid(terrain_gid) }
+          tiles.push(tile(id, is_wall, cost))
+        }
+        Ok({ width, height, tiles })
+      }
+      _ => Err("Tiled root must be an object")
+    }
+  } catch {
+    _ => Err("invalid Tiled JSON")
+  }
 }
 
 ///|

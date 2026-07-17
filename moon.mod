@@ -8,8 +8,8 @@ repository = "https://www.gitlink.org.cn/ttxiangshang/moonbit-pixelkit"
 
 license = "MIT"
 
-keywords = [ "game", "grid", "pathfinding", "tilemap" ]
+keywords = [ "game", "grid", "pathfinding", "tilemap", "tiled" ]
 
 preferred_target = "wasm-gc"
 
-description = "A MoonBit toolkit for 2D pixel game map parsing and pathfinding."
+description = "A MoonBit toolkit for ASCII, CSV, and Tiled JSON grid maps with pathfinding."
