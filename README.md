@@ -39,6 +39,7 @@ S++++++#...G
 Selected target: (6, 2)
 Selected target reachable: true
 This-turn path cost: 8
+This-turn path steps: 8
 S******#...G
 +####+*#....
 +++#+*.....
@@ -92,7 +93,7 @@ Then import it from your `moon.pkg`:
 
 ```moonbit
 import {
-  "ttxiangshang/moonbit-pixelkit" @pixelkit
+  "ttxiangshang/moonbit-pixelkit" @pixelkit,
 }
 ```
 
@@ -167,6 +168,7 @@ println("path length: \{path.length()}")
 - `TileMap::render_ascii_overlay(reachable=..., path=...)` renders movement range and planned paths.
 - `neighbors4(point)` returns cardinal neighbors.
 - `neighbors8(point)` returns cardinal plus diagonal neighbors.
+- `search_options(allow_diagonal=true)` enables diagonal movement while still preventing wall-corner cutting by default; use `allow_corner_cutting=true` only when that behavior is intended.
 - `bfs_reachable(map, start, max_cost, options~)` returns reachable cells.
 - `bfs_reachable_with_costs(map, start, max_cost, options~)` returns reachable cells with accumulated movement costs.
 - `movement_preview(map, start, target, max_cost, options~)` returns range, target reachability, target cost, and target path in one call.

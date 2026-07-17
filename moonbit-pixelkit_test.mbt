@@ -362,6 +362,35 @@ test "A star can use diagonal movement when enabled" {
 }
 
 ///|
+test "diagonal movement does not cut through blocked corners by default" {
+  let source =
+    #|S#
+    #|#G
+  let map = parse_ascii_map(source).unwrap()
+  let options = search_options(allow_diagonal=true)
+  debug_inspect(
+    astar(map, point(0, 0), point(1, 1), options~).unwrap(),
+    content="None",
+  )
+  inspect(
+    map.validate_path([point(0, 0), point(1, 1)], options~) is Err(_),
+    content="true",
+  )
+}
+
+///|
+test "diagonal movement can opt into corner cutting" {
+  let source =
+    #|S#
+    #|#G
+  let map = parse_ascii_map(source).unwrap()
+  let options = search_options(allow_diagonal=true, allow_corner_cutting=true)
+  let path = astar(map, point(0, 0), point(1, 1), options~).unwrap().unwrap()
+  inspect(path.length(), content="2")
+  inspect(map.validate_path(path, options~) is Ok(_), content="true")
+}
+
+///|
 test "A star diagonal movement still respects terrain costs" {
   let source =
     #|0,9,0

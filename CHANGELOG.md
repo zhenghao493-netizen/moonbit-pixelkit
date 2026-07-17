@@ -16,6 +16,10 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Added `examples/tactical_preview`, a reviewer-facing showcase for tactical movement range and route previews.
 - Added `showcase.html`, a standalone browser preview for tactical movement and route visualization.
 
+### Changed
+
+- Diagonal pathfinding, reachability, and path validation now reject wall-corner cutting by default; callers can opt in with `allow_corner_cutting=true`.
+
 ## 0.1.0 - 2026-07-08
 
 Initial contest-ready release candidate.

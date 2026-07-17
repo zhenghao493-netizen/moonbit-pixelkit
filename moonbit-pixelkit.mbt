@@ -31,9 +31,10 @@ pub struct AsciiOptions {
 } derive(Eq, Debug)
 
 ///|
-/// Options shared by path search helpers.
+/// Options shared by path search helpers. Diagonal movement does not cut corners by default.
 pub struct SearchOptions {
   allow_diagonal : Bool
+  allow_corner_cutting : Bool
 } derive(Eq, Debug)
 
 ///|
@@ -85,7 +86,7 @@ pub fn AsciiOptions::default() -> AsciiOptions {
 ///|
 /// Default path search settings: four-direction movement.
 pub fn SearchOptions::default() -> SearchOptions {
-  { allow_diagonal: false }
+  { allow_diagonal: false, allow_corner_cutting: false }
 }
 
 ///|
@@ -95,9 +96,12 @@ pub fn CsvOptions::default() -> CsvOptions {
 }
 
 ///|
-/// Create search options.
-pub fn search_options(allow_diagonal? : Bool = false) -> SearchOptions {
-  { allow_diagonal, }
+/// Create search options. Set `allow_corner_cutting` only for games that permit diagonal wall cutting.
+pub fn search_options(
+  allow_diagonal? : Bool = false,
+  allow_corner_cutting? : Bool = false,
+) -> SearchOptions {
+  { allow_diagonal, allow_corner_cutting }
 }
 
 ///|
@@ -571,7 +575,7 @@ pub fn TileMap::validate_path(
     }
     if index > 0 {
       let previous = path[index - 1]
-      if !is_legal_step(previous, p, options) {
+      if !self.can_step(previous, p, options) {
         return Err(
           "illegal step from (\{previous.x}, \{previous.y}) to (\{p.x}, \{p.y})",
         )
@@ -627,17 +631,51 @@ fn is_legal_step(a : Point, b : Point, options : SearchOptions) -> Bool {
 }
 
 ///|
+fn is_diagonal_step(a : Point, b : Point) -> Bool {
+  abs_int(a.x - b.x) == 1 && abs_int(a.y - b.y) == 1
+}
+
+///|
+fn TileMap::can_step(
+  self : TileMap,
+  from : Point,
+  to : Point,
+  options : SearchOptions,
+) -> Bool {
+  if !self.is_walkable(to) || !is_legal_step(from, to, options) {
+    return false
+  }
+  if !options.allow_corner_cutting && is_diagonal_step(from, to) {
+    let horizontal = point(to.x, from.y)
+    let vertical = point(from.x, to.y)
+    return self.is_walkable(horizontal) && self.is_walkable(vertical)
+  }
+  true
+}
+
+///|
 fn TileMap::point_from_index(self : TileMap, index : Int) -> Point {
   point(index % self.width, index / self.width)
 }
 
 ///|
-fn candidate_neighbors(p : Point, options : SearchOptions) -> Array[Point] {
-  if options.allow_diagonal {
+fn TileMap::candidate_neighbors(
+  self : TileMap,
+  p : Point,
+  options : SearchOptions,
+) -> Array[Point] {
+  let candidates = if options.allow_diagonal {
     neighbors8(p)
   } else {
     neighbors4(p)
   }
+  let neighbors : Array[Point] = []
+  for next in candidates {
+    if self.can_step(p, next, options) {
+      neighbors.push(next)
+    }
+  }
+  neighbors
 }
 
 ///|
@@ -683,16 +721,14 @@ pub fn bfs_reachable_with_costs(
     let current = queue[cursor]
     cursor = cursor + 1
     let current_cost = cost[map.index(current)]
-    for next in candidate_neighbors(current, options) {
-      if map.is_walkable(next) {
-        let next_index = map.index(next)
-        let step_cost = map.movement_cost(next).unwrap()
-        let new_cost = current_cost + step_cost
-        if new_cost <= max_cost &&
-          (cost[next_index] == -1 || new_cost < cost[next_index]) {
-          cost[next_index] = new_cost
-          queue.push(next)
-        }
+    for next in map.candidate_neighbors(current, options) {
+      let next_index = map.index(next)
+      let step_cost = map.movement_cost(next).unwrap()
+      let new_cost = current_cost + step_cost
+      if new_cost <= max_cost &&
+        (cost[next_index] == -1 || new_cost < cost[next_index]) {
+        cost[next_index] = new_cost
+        queue.push(next)
       }
     }
   }
@@ -803,17 +839,15 @@ pub fn astar(
       return Ok(Some(path.rev()))
     }
     closed[best_index] = true
-    for next in candidate_neighbors(current, options) {
-      if map.is_walkable(next) {
-        let next_index = map.index(next)
-        if !closed[next_index] {
-          let tentative = g_score[best_index] + map.movement_cost(next).unwrap()
-          if tentative < g_score[next_index] {
-            came_from[next_index] = best_index
-            g_score[next_index] = tentative
-            if !open.contains(next) {
-              open.push(next)
-            }
+    for next in map.candidate_neighbors(current, options) {
+      let next_index = map.index(next)
+      if !closed[next_index] {
+        let tentative = g_score[best_index] + map.movement_cost(next).unwrap()
+        if tentative < g_score[next_index] {
+          came_from[next_index] = best_index
+          g_score[next_index] = tentative
+          if !open.contains(next) {
+            open.push(next)
           }
         }
       }

@@ -66,7 +66,7 @@ Expected baseline:
 - `bfs_reachable_with_costs` returns reachable cells together with their accumulated movement costs.
 - `movement_preview` combines reachable cells, target reachability, target cost, and selected-target path for tactical UI flows.
 - `astar` returns a path or `None` when a reachable path does not exist.
-- `SearchOptions` supports four-way movement by default and optional diagonal movement.
+- `SearchOptions` supports four-way movement by default and optional diagonal movement without wall-corner cutting unless explicitly enabled.
 
 ## Known Boundaries
 
