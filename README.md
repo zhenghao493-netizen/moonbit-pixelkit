@@ -58,7 +58,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - tile lookup and walkability checks
 - movement costs
 - four-way and eight-way neighbor helpers
-- BFS reachable-area search with accumulated movement costs
+- Dijkstra reachable-area search with accumulated movement costs
 - A* path search
 - start/goal lookup helpers
 - path movement-cost summaries
@@ -170,7 +170,7 @@ println("path length: \{path.length()}")
 - `neighbors8(point)` returns cardinal plus diagonal neighbors.
 - `search_options(allow_diagonal=true)` enables diagonal movement while still preventing wall-corner cutting by default; use `allow_corner_cutting=true` only when that behavior is intended.
 - `bfs_reachable(map, start, max_cost, options~)` returns reachable cells.
-- `bfs_reachable_with_costs(map, start, max_cost, options~)` returns reachable cells with accumulated movement costs.
+- `bfs_reachable_with_costs(map, start, max_cost, options~)` uses a Dijkstra frontier to return reachable cells with minimum accumulated movement costs.
 - `movement_preview(map, start, target, max_cost, options~)` returns range, target reachability, target cost, and target path in one call.
 - `astar(map, start, goal, options~)` returns a path or `None`.
 

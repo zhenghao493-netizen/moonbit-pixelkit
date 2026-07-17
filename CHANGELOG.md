@@ -19,6 +19,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 ### Changed
 
 - Diagonal pathfinding, reachability, and path validation now reject wall-corner cutting by default; callers can opt in with `allow_corner_cutting=true`.
+- Weighted reachable-area search now uses a priority-queue Dijkstra frontier for stable minimum-cost results on larger maps.
 
 ## 0.1.0 - 2026-07-08
 

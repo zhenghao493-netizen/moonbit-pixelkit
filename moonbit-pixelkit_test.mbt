@@ -165,6 +165,26 @@ test "BFS reachable with costs reports accumulated movement cost" {
 }
 
 ///|
+test "Dijkstra reachability keeps the lowest weighted route" {
+  let source =
+    #|0,9,0
+    #|0,0,0
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("9", 9)]),
+  ).unwrap()
+  let reachable = bfs_reachable_with_costs(map, point(0, 0), 10).unwrap()
+  let mut target_cost = -1
+  for cell in reachable {
+    if cell.point() == point(2, 0) {
+      target_cost = cell.cost()
+    }
+  }
+  // The direct route costs 10 through tile 9; the lower route costs 4.
+  inspect(target_cost, content="4")
+}
+
+///|
 test "movement preview combines range target cost and path" {
   let source =
     #|0,2,3

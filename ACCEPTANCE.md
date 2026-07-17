@@ -11,7 +11,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - License: MIT
 - Main language: MoonBit
 
-`moonbit-pixelkit` provides a small reusable core for grid-based games and demos: ASCII/CSV map parsing, tile queries, walkability checks, movement costs, named point lookup, BFS reachable-area search with accumulated costs, high-level movement previews, A* pathfinding, path validation, path cost summaries, and ASCII debug rendering.
+`moonbit-pixelkit` provides a small reusable core for grid-based games and demos: ASCII/CSV map parsing, tile queries, walkability checks, movement costs, named point lookup, Dijkstra reachable-area search with accumulated costs, high-level movement previews, A* pathfinding, path validation, path cost summaries, and ASCII debug rendering.
 
 ## Initial Review Assets
 
@@ -63,7 +63,7 @@ Expected baseline:
 - `TileMap::validate_path` checks externally supplied paths for legal movement steps and returns a `PathReport`.
 - `TileMap::render_ascii_overlay` marks reachable cells with `+` and planned paths with `*`.
 - `bfs_reachable` returns cells reachable within a movement budget.
-- `bfs_reachable_with_costs` returns reachable cells together with their accumulated movement costs.
+- `bfs_reachable_with_costs` uses a priority-queue Dijkstra frontier to return reachable cells with their minimum accumulated movement costs.
 - `movement_preview` combines reachable cells, target reachability, target cost, and selected-target path for tactical UI flows.
 - `astar` returns a path or `None` when a reachable path does not exist.
 - `SearchOptions` supports four-way movement by default and optional diagonal movement without wall-corner cutting unless explicitly enabled.

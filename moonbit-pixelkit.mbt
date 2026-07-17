@@ -70,6 +70,22 @@ pub struct PathReport {
 } derive(Eq, Debug)
 
 ///|
+priv struct FrontierEntry {
+  cost : Int
+  index : Int
+} derive(Eq)
+
+///|
+impl Compare for FrontierEntry with fn compare(self, other) -> Int {
+  let cost_order = other.cost.compare(self.cost)
+  if cost_order != 0 {
+    cost_order
+  } else {
+    other.index.compare(self.index)
+  }
+}
+
+///|
 /// Options for CSV map parsing.
 pub struct CsvOptions {
   wall_ids : Array[String]
@@ -700,6 +716,7 @@ pub fn bfs_reachable(
 
 ///|
 /// Return all walkable cells reachable from `start`, including accumulated cost.
+/// Uses a Dijkstra frontier for weighted terrain.
 pub fn bfs_reachable_with_costs(
   map : TileMap,
   start : Point,
@@ -713,22 +730,23 @@ pub fn bfs_reachable_with_costs(
     return Err("start is not walkable")
   }
   let size = map.width * map.height
-  let mut cursor = 0
-  let queue : Array[Point] = [start]
   let cost = Array::make(size, -1)
   cost[map.index(start)] = 0
-  while cursor < queue.length() {
-    let current = queue[cursor]
-    cursor = cursor + 1
-    let current_cost = cost[map.index(current)]
-    for next in map.candidate_neighbors(current, options) {
-      let next_index = map.index(next)
-      let step_cost = map.movement_cost(next).unwrap()
-      let new_cost = current_cost + step_cost
-      if new_cost <= max_cost &&
-        (cost[next_index] == -1 || new_cost < cost[next_index]) {
-        cost[next_index] = new_cost
-        queue.push(next)
+  let frontier : @priority_queue.PriorityQueue[FrontierEntry] = @priority_queue.PriorityQueue([],
+  )
+  frontier.push({ cost: 0, index: map.index(start) })
+  while !frontier.is_empty() {
+    let entry = frontier.pop().unwrap()
+    if entry.cost == cost[entry.index] {
+      let current = map.point_from_index(entry.index)
+      for next in map.candidate_neighbors(current, options) {
+        let next_index = map.index(next)
+        let new_cost = entry.cost + map.movement_cost(next).unwrap()
+        if new_cost <= max_cost &&
+          (cost[next_index] == -1 || new_cost < cost[next_index]) {
+          cost[next_index] = new_cost
+          frontier.push({ cost: new_cost, index: next_index })
+        }
       }
     }
   }
