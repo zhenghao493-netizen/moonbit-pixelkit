@@ -64,7 +64,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - high-level movement previews for tactical target selection
 - ASCII overlays for reachable cells and planned paths
 - game-style examples for pathfinding, turn previews, and tactical movement
-- CI with `moon check` and `moon test`
+- CI with `moon check`, `moon build`, and `moon test`
 
 ## Acceptance Checklist
 
@@ -74,7 +74,7 @@ The repository currently includes the minimum assets expected for a reusable Moo
 - MoonBit module metadata in `moon.mod`
 - runnable examples under `examples/`
 - unit tests for parser behavior, map queries, reachability, A*, diagonal movement, and error paths
-- GitHub Actions workflow for `moon check` and `moon test`
+- GitHub Actions workflow for `moon check`, `moon build`, and `moon test`
 - project proposal document: `moonbit-pixelkit-project-proposal.md`
 - acceptance guide: `ACCEPTANCE.md`
 - changelog: `CHANGELOG.md`
@@ -82,10 +82,35 @@ The repository currently includes the minimum assets expected for a reusable Moo
 
 ## Quick Start
 
+Install the package in another MoonBit project:
+
+```bash
+moon add ttxiangshang/moonbit-pixelkit
+```
+
+Then import it from your `moon.pkg`:
+
+```moonbit
+import {
+  "ttxiangshang/moonbit-pixelkit" @pixelkit
+}
+```
+
+Run from this repository:
+
+```bash
+git clone https://github.com/zhenghao493-netizen/moonbit-pixelkit.git
+cd moonbit-pixelkit
+moon check
+moon build
+moon test
+```
+
 Run the checks:
 
 ```bash
 moon check
+moon build
 moon test
 ```
 
@@ -138,6 +163,7 @@ println("path length: \{path.length()}")
 - `TileMap::first_point_with_id(id)` returns the first matching tile coordinate.
 - `TileMap::single_point_with_id(id)` validates that exactly one matching tile exists.
 - `TileMap::path_cost(path)` sums movement cost after the starting cell.
+- `TileMap::validate_path(path, options~)` checks for walkable, step-by-step legal routes and returns a path report.
 - `TileMap::render_ascii_overlay(reachable=..., path=...)` renders movement range and planned paths.
 - `neighbors4(point)` returns cardinal neighbors.
 - `neighbors8(point)` returns cardinal plus diagonal neighbors.
@@ -165,6 +191,7 @@ let reachable = preview.reachable_points()
 let path = preview.path().unwrap()
 
 println("cost: \{preview.path_cost().unwrap()}")
+println("steps: \{map.validate_path(path).unwrap().steps()}")
 println(map.render_ascii_overlay(reachable=reachable, path=path))
 ```
 
@@ -203,6 +230,7 @@ Useful verification commands:
 
 ```bash
 moon check
+moon build
 moon test
 moon run cmd/main
 moon run examples/ascii_maze

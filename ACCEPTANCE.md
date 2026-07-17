@@ -11,7 +11,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - License: MIT
 - Main language: MoonBit
 
-`moonbit-pixelkit` provides a small reusable core for grid-based games and demos: ASCII/CSV map parsing, tile queries, walkability checks, movement costs, named point lookup, BFS reachable-area search with accumulated costs, high-level movement previews, A* pathfinding, path cost summaries, and ASCII debug rendering.
+`moonbit-pixelkit` provides a small reusable core for grid-based games and demos: ASCII/CSV map parsing, tile queries, walkability checks, movement costs, named point lookup, BFS reachable-area search with accumulated costs, high-level movement previews, A* pathfinding, path validation, path cost summaries, and ASCII debug rendering.
 
 ## Initial Review Assets
 
@@ -30,8 +30,9 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 Run these commands from the repository root:
 
 ```bash
-moon check
-moon test
+moon check --deny-warn
+moon build --deny-warn
+moon test --deny-warn
 moon package
 moon run cmd/main
 moon run examples/ascii_maze
@@ -59,6 +60,7 @@ Expected baseline:
 - `TileMap` supports dimensions, bounds checks, tile lookup, movement costs, id lookup, and ASCII rendering.
 - `TileMap::single_point_with_id` validates maps that should contain exactly one start or goal marker.
 - `TileMap::path_cost` sums the movement cost of a planned route for game-style turn previews.
+- `TileMap::validate_path` checks externally supplied paths for legal movement steps and returns a `PathReport`.
 - `TileMap::render_ascii_overlay` marks reachable cells with `+` and planned paths with `*`.
 - `bfs_reachable` returns cells reachable within a movement budget.
 - `bfs_reachable_with_costs` returns reachable cells together with their accumulated movement costs.

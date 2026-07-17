@@ -62,6 +62,13 @@ pub struct MovementPreview {
 } derive(Debug)
 
 ///|
+/// A validated movement path with step count and movement cost.
+pub struct PathReport {
+  steps : Int
+  cost : Int
+} derive(Eq, Debug)
+
+///|
 /// Options for CSV map parsing.
 pub struct CsvOptions {
   wall_ids : Array[String]
@@ -294,6 +301,18 @@ pub fn MovementPreview::path_cost(self : MovementPreview) -> Int? {
 /// Return the planned path when the target is reachable within the budget.
 pub fn MovementPreview::path(self : MovementPreview) -> Array[Point]? {
   self.path
+}
+
+///|
+/// Return the number of movement steps in the validated path.
+pub fn PathReport::steps(self : PathReport) -> Int {
+  self.steps
+}
+
+///|
+/// Return the movement cost of the validated path.
+pub fn PathReport::cost(self : PathReport) -> Int {
+  self.cost
 }
 
 ///|
@@ -533,6 +552,36 @@ pub fn TileMap::path_cost(
 }
 
 ///|
+/// Validate that a path stays walkable and uses legal neighbor-to-neighbor steps.
+pub fn TileMap::validate_path(
+  self : TileMap,
+  path : Array[Point],
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[PathReport, String] {
+  if path.length() == 0 {
+    return Err("path is empty")
+  }
+  for index in 0..<path.length() {
+    let p = path[index]
+    if !self.in_bounds(p) {
+      return Err("path point (\{p.x}, \{p.y}) is out of bounds")
+    }
+    if !self.is_walkable(p) {
+      return Err("path point (\{p.x}, \{p.y}) is not walkable")
+    }
+    if index > 0 {
+      let previous = path[index - 1]
+      if !is_legal_step(previous, p, options) {
+        return Err(
+          "illegal step from (\{previous.x}, \{previous.y}) to (\{p.x}, \{p.y})",
+        )
+      }
+    }
+  }
+  Ok({ steps: path.length() - 1, cost: self.path_cost(path).unwrap() })
+}
+
+///|
 fn abs_int(value : Int) -> Int {
   if value < 0 {
     -value
@@ -563,6 +612,17 @@ fn heuristic(a : Point, b : Point, options : SearchOptions) -> Int {
     chebyshev(a, b)
   } else {
     manhattan(a, b)
+  }
+}
+
+///|
+fn is_legal_step(a : Point, b : Point, options : SearchOptions) -> Bool {
+  let dx = abs_int(a.x - b.x)
+  let dy = abs_int(a.y - b.y)
+  if options.allow_diagonal {
+    (dx <= 1 && dy <= 1) && dx + dy > 0
+  } else {
+    dx + dy == 1
   }
 }
 

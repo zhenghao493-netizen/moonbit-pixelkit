@@ -216,6 +216,39 @@ test "movement preview rejects blocked targets" {
 }
 
 ///|
+test "validate path reports steps and cost" {
+  let source =
+    #|S..
+    #|##.
+    #|..G
+  let map = parse_ascii_map(source).unwrap()
+  let path = astar(map, point(0, 0), point(2, 2)).unwrap().unwrap()
+  let report = map.validate_path(path).unwrap()
+  inspect(report.steps(), content="4")
+  inspect(report.cost(), content="4")
+}
+
+///|
+test "validate path rejects illegal steps out of bounds and blocked tiles" {
+  let source =
+    #|S#G
+    #|..#
+  let map = parse_ascii_map(source).unwrap()
+  inspect(
+    map.validate_path([point(0, 0), point(2, 0)]) is Err(_),
+    content="true",
+  )
+  inspect(
+    map.validate_path([point(0, 0), point(1, 0)]) is Err(_),
+    content="true",
+  )
+  inspect(
+    map.validate_path([point(0, 0), point(-1, 0)]) is Err(_),
+    content="true",
+  )
+}
+
+///|
 test "BFS rejects invalid starts and budgets" {
   let source =
     #|S#
