@@ -201,16 +201,16 @@ println(map.render_ascii_overlay(reachable=reachable, path=path))
 
 - Structured parse and pathfinding error types.
 - Additional gameplay helpers for turn previews and editor tooling.
-- More package examples after the `0.1.1` Mooncakes release.
+- More package examples after the next Mooncakes release.
 - Optional Tiled JSON import experiments after the core API settles.
 
 ## Release
 
-Version `0.1.0` is published on Mooncakes:
+Version `0.1.1` is published on Mooncakes:
 
 https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
 
-The main branch is now continuing toward `0.1.1`.
+The main branch contains the current published package.
 
 Local packaging is verified with:
 
@@ -221,9 +221,9 @@ moon package
 Recommended release tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
-git push gitlink v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
+git push gitlink v0.1.1
 ```
 
 ## Development Notes
