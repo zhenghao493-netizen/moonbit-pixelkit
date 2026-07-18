@@ -297,6 +297,21 @@ test "Dijkstra reachability keeps the lowest weighted route" {
 }
 
 ///|
+test "A star keeps the lowest weighted route" {
+  let source =
+    #|0,9,0
+    #|0,0,0
+  let map = parse_csv_map_with_options(
+    source,
+    csv_options(terrain_costs=[terrain_cost("9", 9)]),
+  ).unwrap()
+  let path = astar(map, point(0, 0), point(2, 0)).unwrap().unwrap()
+  inspect(map.path_cost(path).unwrap(), content="4")
+  inspect(path.length(), content="5")
+  inspect(path.contains(point(1, 0)), content="false")
+}
+
+///|
 test "movement preview combines range target cost and path" {
   let source =
     #|0,2,3

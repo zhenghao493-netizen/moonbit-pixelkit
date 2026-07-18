@@ -61,7 +61,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - movement costs
 - four-way and eight-way neighbor helpers
 - Dijkstra reachable-area search with accumulated movement costs
-- A* path search
+- priority-queue A* path search with weighted-terrain routing
 - start/goal lookup helpers
 - path movement-cost summaries
 - high-level movement previews for tactical target selection

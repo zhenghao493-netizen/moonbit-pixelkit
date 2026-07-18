@@ -22,8 +22,8 @@ Recorded on 2026-07-18 with the command above:
 
 | Benchmark | Mean |
 | --- | ---: |
-| A* route | 1.67 ms |
-| Dijkstra reachability | 90.55 us |
-| Movement preview | 1.70 ms |
+| A* route | 86.33 us |
+| Dijkstra reachability | 93.47 us |
+| Movement preview | 176.94 us |
 
-These figures are a reproducibility baseline, not a cross-machine performance promise. Compare changes only with the same MoonBit version, target, hardware, and command. The benchmark suite is intentionally separate from the library package so production consumers do not inherit test-only dependencies.
+The A* benchmark uses the same priority-queue frontier pattern as Dijkstra, while retaining the admissible grid heuristic for weighted terrain. These figures are a reproducibility baseline, not a cross-machine performance promise. Compare changes only with the same MoonBit version, target, hardware, and command. The benchmark suite is intentionally separate from the library package so production consumers do not inherit test-only dependencies.

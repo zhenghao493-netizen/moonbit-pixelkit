@@ -71,17 +71,23 @@ pub struct PathReport {
 
 ///|
 priv struct FrontierEntry {
+  priority : Int
   cost : Int
   index : Int
 } derive(Eq)
 
 ///|
 impl Compare for FrontierEntry with fn compare(self, other) -> Int {
-  let cost_order = other.cost.compare(self.cost)
-  if cost_order != 0 {
-    cost_order
+  let priority_order = other.priority.compare(self.priority)
+  if priority_order != 0 {
+    priority_order
   } else {
-    other.index.compare(self.index)
+    let cost_order = other.cost.compare(self.cost)
+    if cost_order != 0 {
+      cost_order
+    } else {
+      other.index.compare(self.index)
+    }
   }
 }
 
@@ -1154,7 +1160,7 @@ pub fn bfs_reachable_with_costs_detailed(
   cost[map.index(start)] = 0
   let frontier : @priority_queue.PriorityQueue[FrontierEntry] = @priority_queue.PriorityQueue([],
   )
-  frontier.push({ cost: 0, index: map.index(start) })
+  frontier.push({ priority: 0, cost: 0, index: map.index(start) })
   while !frontier.is_empty() {
     let entry = frontier.pop().unwrap()
     if entry.cost == cost[entry.index] {
@@ -1165,7 +1171,11 @@ pub fn bfs_reachable_with_costs_detailed(
         if new_cost <= max_cost &&
           (cost[next_index] == -1 || new_cost < cost[next_index]) {
           cost[next_index] = new_cost
-          frontier.push({ cost: new_cost, index: next_index })
+          frontier.push({
+            priority: new_cost,
+            cost: new_cost,
+            index: next_index,
+          })
         }
       }
     }
@@ -1246,7 +1256,7 @@ pub fn movement_preview_detailed(
 }
 
 ///|
-/// Find a path from `start` to `goal` with A*. Returns `None` when unreachable.
+/// Find a path from `start` to `goal` with a priority-queue A*. Returns `None` when unreachable.
 pub fn astar(
   map : TileMap,
   start : Point,
@@ -1260,7 +1270,7 @@ pub fn astar(
 }
 
 ///|
-/// Find an A* path with structured start and goal validation errors.
+/// Find a priority-queue A* path with structured start and goal validation errors.
 pub fn astar_detailed(
   map : TileMap,
   start : Point,
@@ -1274,48 +1284,41 @@ pub fn astar_detailed(
     return Err(GoalNotWalkable(goal))
   }
   let size = map.width * map.height
-  let open : Array[Point] = [start]
-  let closed = Array::make(size, false)
   let g_score = Array::make(size, 1_000_000_000)
   let came_from = Array::make(size, -1)
-  g_score[map.index(start)] = 0
-  while true {
-    let mut best_index = -1
-    let mut best_score = 1_000_000_000
-    for p in open {
-      let index = map.index(p)
-      if !closed[index] {
-        let score = g_score[index] + heuristic(p, goal, options)
-        if score < best_score {
-          best_score = score
-          best_index = index
+  let start_index = map.index(start)
+  g_score[start_index] = 0
+  let frontier : @priority_queue.PriorityQueue[FrontierEntry] = @priority_queue.PriorityQueue([],
+  )
+  frontier.push({
+    priority: heuristic(start, goal, options),
+    cost: 0,
+    index: start_index,
+  })
+  while !frontier.is_empty() {
+    let entry = frontier.pop().unwrap()
+    if entry.cost == g_score[entry.index] {
+      let current = map.point_from_index(entry.index)
+      if current == goal {
+        let path : Array[Point] = []
+        let mut cursor = entry.index
+        while cursor != -1 {
+          path.push(map.point_from_index(cursor))
+          cursor = came_from[cursor]
         }
+        return Ok(Some(path.rev()))
       }
-    }
-    if best_index == -1 {
-      return Ok(None)
-    }
-    let current = map.point_from_index(best_index)
-    if current == goal {
-      let path : Array[Point] = []
-      let mut cursor = best_index
-      while cursor != -1 {
-        path.push(map.point_from_index(cursor))
-        cursor = came_from[cursor]
-      }
-      return Ok(Some(path.rev()))
-    }
-    closed[best_index] = true
-    for next in map.candidate_neighbors(current, options) {
-      let next_index = map.index(next)
-      if !closed[next_index] {
-        let tentative = g_score[best_index] + map.movement_cost(next).unwrap()
+      for next in map.candidate_neighbors(current, options) {
+        let next_index = map.index(next)
+        let tentative = entry.cost + map.movement_cost(next).unwrap()
         if tentative < g_score[next_index] {
-          came_from[next_index] = best_index
+          came_from[next_index] = entry.index
           g_score[next_index] = tentative
-          if !open.contains(next) {
-            open.push(next)
-          }
+          frontier.push({
+            priority: tentative + heuristic(next, goal, options),
+            cost: tentative,
+            index: next_index,
+          })
         }
       }
     }

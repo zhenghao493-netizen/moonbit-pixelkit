@@ -13,6 +13,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Added `PathError` and detailed path cost, validation, reachability, movement preview, and A* APIs for typed gameplay diagnostics.
 - Added an isolated release-mode benchmark package and `PERFORMANCE.md` for reproducible A*, Dijkstra, and movement-preview baselines.
 - Tiled JSON import now clears all four Tiled GID flip and rotation flags before collision and terrain-cost lookup, including IDs with the unsigned high bit set.
+- Replaced A*'s linear candidate scan with a priority-queue frontier, preserving weighted-route optimality while substantially improving the benchmarked 32 x 32 route and movement-preview workloads.
 
 ## 0.1.1 - 2026-07-17
 
