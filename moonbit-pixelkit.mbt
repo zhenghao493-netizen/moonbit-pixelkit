@@ -160,6 +160,37 @@ pub fn ParseError::message(self : ParseError) -> String {
 }
 
 ///|
+/// A structured failure returned by detailed pathfinding and path-validation APIs.
+pub enum PathError {
+  PathEmpty
+  PathPointOutOfBounds(Int, Point)
+  PathPointNotWalkable(Int, Point)
+  IllegalPathStep(Int, Point, Point)
+  NegativeMaxCost(Int)
+  StartNotWalkable(Point)
+  GoalNotWalkable(Point)
+  TargetNotWalkable(Point)
+} derive(Eq, Debug)
+
+///|
+/// Render a structured path error as a concise user-facing message.
+pub fn PathError::message(self : PathError) -> String {
+  match self {
+    PathEmpty => "path is empty"
+    PathPointOutOfBounds(_, point) =>
+      "path point (\{point.x}, \{point.y}) is out of bounds"
+    PathPointNotWalkable(_, point) =>
+      "path point (\{point.x}, \{point.y}) is not walkable"
+    IllegalPathStep(_, from, to) =>
+      "illegal step from (\{from.x}, \{from.y}) to (\{to.x}, \{to.y})"
+    NegativeMaxCost(_) => "max_cost must be non-negative"
+    StartNotWalkable(_) => "start is not walkable"
+    GoalNotWalkable(_) => "goal is not walkable"
+    TargetNotWalkable(_) => "target is not walkable"
+  }
+}
+
+///|
 /// Default ASCII conventions: `#` walls, `.` floors, `S` start, `G` goal.
 pub fn AsciiOptions::default() -> AsciiOptions {
   { wall: '#', floor: '.', start: 'S', goal: 'G' }
@@ -883,14 +914,26 @@ pub fn TileMap::path_cost(
   self : TileMap,
   path : Array[Point],
 ) -> Result[Int, String] {
+  match self.path_cost_detailed(path) {
+    Ok(cost) => Ok(cost)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Return a path movement cost with structured point-validation errors.
+pub fn TileMap::path_cost_detailed(
+  self : TileMap,
+  path : Array[Point],
+) -> Result[Int, PathError] {
   let mut total = 0
   for index in 0..<path.length() {
     let p = path[index]
     if !self.in_bounds(p) {
-      return Err("path point (\{p.x}, \{p.y}) is out of bounds")
+      return Err(PathPointOutOfBounds(index, p))
     }
     if !self.is_walkable(p) {
-      return Err("path point (\{p.x}, \{p.y}) is not walkable")
+      return Err(PathPointNotWalkable(index, p))
     }
     if index > 0 {
       total = total + self.movement_cost(p).unwrap()
@@ -906,27 +949,42 @@ pub fn TileMap::validate_path(
   path : Array[Point],
   options? : SearchOptions = SearchOptions::default(),
 ) -> Result[PathReport, String] {
+  match self.validate_path_detailed(path, options~) {
+    Ok(report) => Ok(report)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Validate a path with structured errors for empty paths, tiles, and steps.
+pub fn TileMap::validate_path_detailed(
+  self : TileMap,
+  path : Array[Point],
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[PathReport, PathError] {
   if path.length() == 0 {
-    return Err("path is empty")
+    return Err(PathEmpty)
   }
   for index in 0..<path.length() {
     let p = path[index]
     if !self.in_bounds(p) {
-      return Err("path point (\{p.x}, \{p.y}) is out of bounds")
+      return Err(PathPointOutOfBounds(index, p))
     }
     if !self.is_walkable(p) {
-      return Err("path point (\{p.x}, \{p.y}) is not walkable")
+      return Err(PathPointNotWalkable(index, p))
     }
     if index > 0 {
       let previous = path[index - 1]
       if !self.can_step(previous, p, options) {
-        return Err(
-          "illegal step from (\{previous.x}, \{previous.y}) to (\{p.x}, \{p.y})",
-        )
+        return Err(IllegalPathStep(index, previous, p))
       }
     }
   }
-  Ok({ steps: path.length() - 1, cost: self.path_cost(path).unwrap() })
+  let cost = match self.path_cost_detailed(path) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
+  Ok({ steps: path.length() - 1, cost })
 }
 
 ///|
@@ -1030,8 +1088,22 @@ pub fn bfs_reachable(
   max_cost : Int,
   options? : SearchOptions = SearchOptions::default(),
 ) -> Result[Array[Point], String] {
-  match bfs_reachable_with_costs(map, start, max_cost, options~) {
-    Err(message) => Err(message)
+  match bfs_reachable_detailed(map, start, max_cost, options~) {
+    Err(error) => Err(error.message())
+    Ok(points) => Ok(points)
+  }
+}
+
+///|
+/// Return reachable cells with structured start and budget errors.
+pub fn bfs_reachable_detailed(
+  map : TileMap,
+  start : Point,
+  max_cost : Int,
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[Array[Point], PathError] {
+  match bfs_reachable_with_costs_detailed(map, start, max_cost, options~) {
+    Err(error) => Err(error)
     Ok(cells) => {
       let points : Array[Point] = []
       for cell in cells {
@@ -1051,11 +1123,25 @@ pub fn bfs_reachable_with_costs(
   max_cost : Int,
   options? : SearchOptions = SearchOptions::default(),
 ) -> Result[Array[ReachableCell], String] {
+  match bfs_reachable_with_costs_detailed(map, start, max_cost, options~) {
+    Ok(cells) => Ok(cells)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Return reachable cells and structured start or movement-budget errors.
+pub fn bfs_reachable_with_costs_detailed(
+  map : TileMap,
+  start : Point,
+  max_cost : Int,
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[Array[ReachableCell], PathError] {
   if max_cost < 0 {
-    return Err("max_cost must be non-negative")
+    return Err(NegativeMaxCost(max_cost))
   }
   if !map.is_walkable(start) {
-    return Err("start is not walkable")
+    return Err(StartNotWalkable(start))
   }
   let size = map.width * map.height
   let cost = Array::make(size, -1)
@@ -1096,11 +1182,26 @@ pub fn movement_preview(
   max_cost : Int,
   options? : SearchOptions = SearchOptions::default(),
 ) -> Result[MovementPreview, String] {
-  if !map.is_walkable(target) {
-    return Err("target is not walkable")
+  match movement_preview_detailed(map, start, target, max_cost, options~) {
+    Ok(preview) => Ok(preview)
+    Err(error) => Err(error.message())
   }
-  match bfs_reachable_with_costs(map, start, max_cost, options~) {
-    Err(message) => Err(message)
+}
+
+///|
+/// Build a movement preview with structured target, start, and budget errors.
+pub fn movement_preview_detailed(
+  map : TileMap,
+  start : Point,
+  target : Point,
+  max_cost : Int,
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[MovementPreview, PathError] {
+  if !map.is_walkable(target) {
+    return Err(TargetNotWalkable(target))
+  }
+  match bfs_reachable_with_costs_detailed(map, start, max_cost, options~) {
+    Err(error) => Err(error)
     Ok(reachable) => {
       let mut target_cost : Int? = None
       for cell in reachable {
@@ -1119,8 +1220,8 @@ pub fn movement_preview(
             path: None,
           })
         Some(_) =>
-          match astar(map, start, target, options~) {
-            Err(message) => Err(message)
+          match astar_detailed(map, start, target, options~) {
+            Err(error) => Err(error)
             Ok(None) =>
               Ok({ start, target, max_cost, reachable, target_cost, path: None })
             Ok(Some(path)) =>
@@ -1146,11 +1247,25 @@ pub fn astar(
   goal : Point,
   options? : SearchOptions = SearchOptions::default(),
 ) -> Result[Array[Point]?, String] {
+  match astar_detailed(map, start, goal, options~) {
+    Ok(path) => Ok(path)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Find an A* path with structured start and goal validation errors.
+pub fn astar_detailed(
+  map : TileMap,
+  start : Point,
+  goal : Point,
+  options? : SearchOptions = SearchOptions::default(),
+) -> Result[Array[Point]?, PathError] {
   if !map.is_walkable(start) {
-    return Err("start is not walkable")
+    return Err(StartNotWalkable(start))
   }
   if !map.is_walkable(goal) {
-    return Err("goal is not walkable")
+    return Err(GoalNotWalkable(goal))
   }
   let size = map.width * map.height
   let open : Array[Point] = [start]

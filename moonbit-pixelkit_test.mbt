@@ -360,6 +360,33 @@ test "validate path rejects illegal steps out of bounds and blocked tiles" {
 }
 
 ///|
+test "detailed path errors expose path indexes and steps" {
+  let source =
+    #|S#G
+    #|...
+  let map = parse_ascii_map(source).unwrap()
+  match map.validate_path_detailed([]) {
+    Err(PathEmpty) => ()
+    _ => inspect(false, content="true")
+  }
+  match map.validate_path_detailed([point(0, 0), point(2, 0)]) {
+    Err(IllegalPathStep(index, from, to)) => {
+      inspect(index, content="1")
+      debug_inspect(from, content="{ x: 0, y: 0 }")
+      debug_inspect(to, content="{ x: 2, y: 0 }")
+    }
+    _ => inspect(false, content="true")
+  }
+  match map.path_cost_detailed([point(0, 0), point(5, 5)]) {
+    Err(PathPointOutOfBounds(index, point)) => {
+      inspect(index, content="1")
+      debug_inspect(point, content="{ x: 5, y: 5 }")
+    }
+    _ => inspect(false, content="true")
+  }
+}
+
+///|
 test "BFS rejects invalid starts and budgets" {
   let source =
     #|S#
@@ -367,6 +394,27 @@ test "BFS rejects invalid starts and budgets" {
   let map = parse_ascii_map(source).unwrap()
   inspect(bfs_reachable(map, point(1, 0), 2) is Err(_), content="true")
   inspect(bfs_reachable(map, point(0, 0), -1) is Err(_), content="true")
+}
+
+///|
+test "detailed search errors expose endpoint and budget context" {
+  let source =
+    #|S#G
+    #|...
+  let map = parse_ascii_map(source).unwrap()
+  match bfs_reachable_detailed(map, point(0, 0), -1) {
+    Err(NegativeMaxCost(cost)) => inspect(cost, content="-1")
+    _ => inspect(false, content="true")
+  }
+  match astar_detailed(map, point(0, 0), point(1, 0)) {
+    Err(GoalNotWalkable(goal)) => debug_inspect(goal, content="{ x: 1, y: 0 }")
+    _ => inspect(false, content="true")
+  }
+  match movement_preview_detailed(map, point(0, 0), point(1, 0), 2) {
+    Err(TargetNotWalkable(target)) =>
+      debug_inspect(target, content="{ x: 1, y: 0 }")
+    _ => inspect(false, content="true")
+  }
 }
 
 ///|

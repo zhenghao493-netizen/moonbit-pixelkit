@@ -56,7 +56,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - rectangular ASCII map parsing
 - CSV tile map parsing
 - orthogonal Tiled JSON import with collision and terrain layers
-- structured parse errors with row, column, field, and layer context
+- structured parse and path errors with row, column, field, layer, point, and step context
 - tile lookup and walkability checks
 - movement costs
 - four-way and eight-way neighbor helpers
@@ -175,15 +175,20 @@ println("path length: \{path.length()}")
 - `TileMap::first_point_with_id(id)` returns the first matching tile coordinate.
 - `TileMap::single_point_with_id(id)` validates that exactly one matching tile exists.
 - `TileMap::path_cost(path)` sums movement cost after the starting cell.
+- `TileMap::path_cost_detailed(path)` returns a `PathError` when a path contains an invalid point.
 - `TileMap::validate_path(path, options~)` checks for walkable, step-by-step legal routes and returns a path report.
+- `TileMap::validate_path_detailed(path, options~)` returns structured empty-path, point, and illegal-step errors.
 - `TileMap::render_ascii_overlay(reachable=..., path=...)` renders movement range and planned paths.
 - `neighbors4(point)` returns cardinal neighbors.
 - `neighbors8(point)` returns cardinal plus diagonal neighbors.
 - `search_options(allow_diagonal=true)` enables diagonal movement while still preventing wall-corner cutting by default; use `allow_corner_cutting=true` only when that behavior is intended.
 - `bfs_reachable(map, start, max_cost, options~)` returns reachable cells.
+- `bfs_reachable_detailed(map, start, max_cost, options~)` returns structured start and movement-budget errors.
 - `bfs_reachable_with_costs(map, start, max_cost, options~)` uses a Dijkstra frontier to return reachable cells with minimum accumulated movement costs.
 - `movement_preview(map, start, target, max_cost, options~)` returns range, target reachability, target cost, and target path in one call.
+- `movement_preview_detailed(...)` returns a `PathError` for invalid starts, targets, or budgets.
 - `astar(map, start, goal, options~)` returns a path or `None`.
+- `astar_detailed(map, start, goal, options~)` returns structured endpoint errors.
 
 ## Turn-Based Movement Use Case
 
@@ -230,7 +235,6 @@ This intentionally supports the portable core of Tiled JSON: orthogonal maps, na
 
 ## Roadmap
 
-- Structured pathfinding and path-validation error types.
 - Additional gameplay helpers for turn previews and editor tooling.
 - More package examples after the next Mooncakes release.
 - Broader Tiled import support such as chunked layers and encoded data, based on real user demand.
