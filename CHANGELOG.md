@@ -12,6 +12,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Added `examples/parse_diagnostics` and an editable ASCII map lab in `showcase.html` for immediate parser and movement-preview feedback.
 - Added `PathError` and detailed path cost, validation, reachability, movement preview, and A* APIs for typed gameplay diagnostics.
 - Added an isolated release-mode benchmark package and `PERFORMANCE.md` for reproducible A*, Dijkstra, and movement-preview baselines.
+- Tiled JSON import now clears all four Tiled GID flip and rotation flags before collision and terrain-cost lookup, including IDs with the unsigned high bit set.
 
 ## 0.1.1 - 2026-07-17
 

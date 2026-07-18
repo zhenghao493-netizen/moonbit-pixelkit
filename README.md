@@ -172,7 +172,7 @@ println("path length: \{path.length()}")
 - `parse_csv_map(text)` parses CSV tile ids; `1` is treated as a wall.
 - `parse_csv_map_detailed(text)` returns structured CSV map errors using default options.
 - `parse_csv_map_with_options_detailed(text, options)` returns structured CSV and option errors.
-- `parse_tiled_json(text, options~)` imports an orthogonal, uncompressed Tiled JSON map from named collision and optional terrain layers.
+- `parse_tiled_json(text, options~)` imports an orthogonal, uncompressed Tiled JSON map from named collision and optional terrain layers, including unsigned GIDs with flip flags.
 - `parse_tiled_json_detailed(text, options~)` returns structured JSON field, orientation, and layer import errors.
 - `tiled_options(...)` configures Tiled collision GIDs, terrain layer, and movement-cost mapping.
 - `ParseError::message()` converts a structured parser error to concise display text while legacy parser APIs continue returning `Result[..., String]`.
@@ -240,6 +240,8 @@ moon run examples/tiled_tactical_preview
 ```
 
 This intentionally supports the portable core of Tiled JSON: orthogonal maps, named `tilelayer` entries, and uncompressed inline integer `data` arrays. Infinite maps, chunked layers, encoded/compressed data, TMX, and image assets remain outside the package boundary.
+
+Tiled stores horizontal, vertical, diagonal, and legacy rotation state in the high four bits of an unsigned GID. The importer clears those display flags before matching `wall_gids` or terrain costs, so configure those options with the base GID such as `1` or `3`. This follows Tiled's [Global Tile IDs](https://doc.mapeditor.org/en/stable/reference/global-tile-ids/) guidance.
 
 ## Roadmap
 

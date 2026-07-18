@@ -633,6 +633,12 @@ fn TiledOptions::cost_for_gid(self : TiledOptions, gid : Int) -> Int {
 }
 
 ///|
+/// Clear Tiled's four high GID flip and rotation flags before tile lookup.
+fn tiled_base_gid(gid : UInt) -> Int {
+  gid.land(0x0FFFFFFFU).reinterpret_as_int()
+}
+
+///|
 fn tiled_required(
   object : Map[String, Json],
   key : String,
@@ -662,12 +668,12 @@ fn tiled_string(value : Json, label : String) -> Result[String, ParseError] {
 }
 
 ///|
-fn tiled_int_array(
+fn tiled_gid_array(
   value : Json,
   label : String,
-) -> Result[Array[Int], ParseError] {
+) -> Result[Array[UInt], ParseError] {
   try {
-    let decoded : Array[Int] = @json.from_json(value)
+    let decoded : Array[UInt] = @json.from_json(value)
     Ok(decoded)
   } catch {
     _ => Err(TiledFieldMustBeIntegerArray(label))
@@ -679,7 +685,7 @@ fn tiled_layer_data(
   layers : Array[Json],
   name : String,
   expected_size : Int,
-) -> Result[Array[Int], ParseError] {
+) -> Result[Array[UInt], ParseError] {
   for layer in layers {
     match layer {
       Object(object) => {
@@ -707,7 +713,7 @@ fn tiled_layer_data(
             Err(message) => return Err(message)
             Ok(value) => value
           }
-          let data = match tiled_int_array(data_value, "layers[].data") {
+          let data = match tiled_gid_array(data_value, "layers[].data") {
             Err(message) => return Err(message)
             Ok(value) => value
           }
@@ -800,7 +806,7 @@ pub fn parse_tiled_json_detailed(
           Err(message) => return Err(message)
           Ok(value) => value
         }
-        let terrain : Array[Int]? = match options.terrain_layer {
+        let terrain : Array[UInt]? = match options.terrain_layer {
           None => None
           Some(name) =>
             match tiled_layer_data(layers, name, size) {
@@ -810,10 +816,10 @@ pub fn parse_tiled_json_detailed(
         }
         let tiles : Array[Tile] = []
         for index in 0..<size {
-          let collision_gid = collision[index]
+          let collision_gid = tiled_base_gid(collision[index])
           let terrain_gid = match terrain {
             None => collision_gid
-            Some(data) => data[index]
+            Some(data) => tiled_base_gid(data[index])
           }
           let is_wall = options.wall_gids.contains(collision_gid)
           let id = terrain_gid.to_string()

@@ -177,6 +177,27 @@ test "Tiled JSON parser imports collision and terrain layers" {
 }
 
 ///|
+test "Tiled JSON parser clears GID flip flags before lookup" {
+  let source =
+    #|{
+    #|  "orientation": "orthogonal",
+    #|  "width": 2,
+    #|  "height": 1,
+    #|  "layers": [
+    #|    { "name": "Collision", "type": "tilelayer", "data": [2147483649, 0] },
+    #|    { "name": "Terrain", "type": "tilelayer", "data": [0, 268435459] }
+    #|  ]
+    #|}
+  let options = tiled_options(terrain_layer=Some("Terrain"), terrain_costs=[
+    terrain_cost("3", 7),
+  ])
+  let map = parse_tiled_json(source, options~).unwrap()
+  inspect(map.is_walkable(point(0, 0)), content="false")
+  inspect(map.tile_at(point(1, 0)).unwrap().id(), content="3")
+  debug_inspect(map.movement_cost(point(1, 0)), content="Some(7)")
+}
+
+///|
 test "Tiled JSON parser rejects unsupported maps and malformed layers" {
   let isometric =
     #|{
