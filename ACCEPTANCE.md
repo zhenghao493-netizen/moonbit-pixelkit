@@ -64,7 +64,7 @@ Expected baseline:
 - `parse_ascii_map` parses rectangular ASCII maps using `#`, `.`, `S`, and `G` by default.
 - `parse_csv_map` parses CSV tile ids, with `1` treated as a wall by default.
 - `parse_csv_map_with_options` supports configurable wall ids and terrain costs.
-- `parse_tiled_json` imports orthogonal Tiled JSON maps with inline tile-layer data, a configurable collision layer, optional terrain layer, and GID-to-cost mapping. It decodes unsigned 32-bit GIDs and clears Tiled flip/rotation flags before matching collision and terrain IDs.
+- `parse_tiled_json` imports orthogonal Tiled JSON maps with native integer or uncompressed Base64 tile-layer data, a configurable collision layer, optional terrain layer, and GID-to-cost mapping. It decodes unsigned 32-bit GIDs and clears Tiled flip/rotation flags before matching collision and terrain IDs.
 - Detailed parser variants return `ParseError` values with row/column, option, Tiled field, orientation, and layer context; detailed search variants return `PathError` values with budget, endpoint, invalid-point, and illegal-step context. Legacy APIs retain string errors for simple callers.
 - `TileMap` supports dimensions, bounds checks, tile lookup, movement costs, id lookup, and ASCII rendering.
 - `TileMap::single_point_with_id` validates maps that should contain exactly one start or goal marker.
@@ -81,7 +81,7 @@ Expected baseline:
 ## Known Boundaries
 
 - The package intentionally targets small to medium grid maps for games, demos, and teaching examples.
-- Tiled JSON support deliberately covers orthogonal maps with inline, uncompressed layer data; PNG, TMX, infinite/chunked maps, and encoded or compressed layer data are not included.
+- Tiled JSON support deliberately covers orthogonal maps with native integer or uncompressed Base64 layer data; PNG, TMX, infinite/chunked maps, and compressed layer data are not included.
 - Mooncakes publication is complete for version `0.1.1`.
 
 ## Publication Status

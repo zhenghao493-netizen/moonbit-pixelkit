@@ -198,6 +198,27 @@ test "Tiled JSON parser clears GID flip flags before lookup" {
 }
 
 ///|
+test "Tiled JSON parser imports uncompressed base64 layer data" {
+  let source =
+    #|{
+    #|  "orientation": "orthogonal",
+    #|  "width": 2,
+    #|  "height": 2,
+    #|  "layers": [
+    #|    { "name": "Collision", "type": "tilelayer", "encoding": "base64", "data": "AQAAAAAAAAAAAAAAAAAAAA==" },
+    #|    { "name": "Terrain", "type": "tilelayer", "encoding": "base64", "data": "AAAAAAMAAAAAAAAAAAAAAA==" }
+    #|  ]
+    #|}
+  let options = tiled_options(terrain_layer=Some("Terrain"), terrain_costs=[
+    terrain_cost("3", 5),
+  ])
+  let map = parse_tiled_json(source, options~).unwrap()
+  inspect(map.is_walkable(point(0, 0)), content="false")
+  inspect(map.tile_at(point(1, 0)).unwrap().id(), content="3")
+  debug_inspect(map.movement_cost(point(1, 0)), content="Some(5)")
+}
+
+///|
 test "Tiled JSON parser rejects unsupported maps and malformed layers" {
   let isometric =
     #|{
@@ -216,6 +237,17 @@ test "Tiled JSON parser rejects unsupported maps and malformed layers" {
   inspect(parse_tiled_json(wrong_size) is Err(_), content="true")
   inspect(parse_tiled_json("{}") is Err(_), content="true")
   inspect(parse_tiled_json("{ invalid JSON") is Err(_), content="true")
+  let compressed =
+    #|{
+    #|  "width": 1,
+    #|  "height": 1,
+    #|  "layers": [{ "name": "Collision", "type": "tilelayer", "encoding": "base64", "compression": "zlib", "data": "AAAAAA==" }]
+    #|}
+  match parse_tiled_json_detailed(compressed) {
+    Err(TiledUnsupportedCompression(compression)) =>
+      inspect(compression, content="zlib")
+    _ => inspect(false, content="true")
+  }
 }
 
 ///|

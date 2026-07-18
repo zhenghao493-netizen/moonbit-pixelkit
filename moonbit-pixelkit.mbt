@@ -124,6 +124,10 @@ pub enum ParseError {
   TiledFieldMustBeInteger(String)
   TiledFieldMustBeString(String)
   TiledFieldMustBeIntegerArray(String)
+  TiledUnsupportedEncoding(String)
+  TiledUnsupportedCompression(String)
+  TiledInvalidBase64Data(String)
+  TiledBase64SizeMismatch(String, Int, Int)
   TiledInvalidDimensions
   TiledUnsupportedOrientation(String)
   TiledLayersMustBeArray
@@ -153,6 +157,13 @@ pub fn ParseError::message(self : ParseError) -> String {
     TiledFieldMustBeString(field) => "Tiled '\{field}' must be a string"
     TiledFieldMustBeIntegerArray(field) =>
       "Tiled '\{field}' must be an integer array"
+    TiledUnsupportedEncoding(encoding) =>
+      "Tiled encoding '\{encoding}' is not supported"
+    TiledUnsupportedCompression(compression) =>
+      "Tiled compression '\{compression}' is not supported"
+    TiledInvalidBase64Data(field) => "Tiled '\{field}' is not valid base64 data"
+    TiledBase64SizeMismatch(field, actual, expected) =>
+      "Tiled '\{field}' has \{actual} bytes, expected \{expected}"
     TiledInvalidDimensions => "Tiled width and height must be positive"
     TiledUnsupportedOrientation(orientation) =>
       "Tiled orientation '\{orientation}' is not supported; use orthogonal"
@@ -687,6 +698,30 @@ fn tiled_gid_array(
 }
 
 ///|
+fn tiled_base64_gid_array(
+  value : Json,
+  label : String,
+  expected_size : Int,
+) -> Result[Array[UInt], ParseError] {
+  let encoded = match tiled_string(value, label) {
+    Err(error) => return Err(error)
+    Ok(text) => text
+  }
+  let bytes = @base64.decode(encoded, ignore_whitespace=true) catch {
+    _ => return Err(TiledInvalidBase64Data(label))
+  }
+  let expected_bytes = expected_size * 4
+  if bytes.length() != expected_bytes {
+    return Err(TiledBase64SizeMismatch(label, bytes.length(), expected_bytes))
+  }
+  let gids : Array[UInt] = []
+  for index in 0..<expected_size {
+    gids.push(bytes.unsafe_read_uint32_le(index * 4))
+  }
+  Ok(gids)
+}
+
+///|
 fn tiled_layer_data(
   layers : Array[Json],
   name : String,
@@ -719,9 +754,47 @@ fn tiled_layer_data(
             Err(message) => return Err(message)
             Ok(value) => value
           }
-          let data = match tiled_gid_array(data_value, "layers[].data") {
-            Err(message) => return Err(message)
-            Ok(value) => value
+          let data = match data_value {
+            Array(_) =>
+              match tiled_gid_array(data_value, "layers[].data") {
+                Err(error) => return Err(error)
+                Ok(value) => value
+              }
+            String(_) => {
+              let encoding_value = match tiled_required(object, "encoding") {
+                Err(error) => return Err(error)
+                Ok(value) => value
+              }
+              let encoding = match
+                tiled_string(encoding_value, "layers[].encoding") {
+                Err(error) => return Err(error)
+                Ok(value) => value
+              }
+              if encoding != "base64" {
+                return Err(TiledUnsupportedEncoding(encoding))
+              }
+              match object.get("compression") {
+                Some(value) => {
+                  let compression = match
+                    tiled_string(value, "layers[].compression") {
+                    Err(error) => return Err(error)
+                    Ok(value) => value
+                  }
+                  if compression != "" {
+                    return Err(TiledUnsupportedCompression(compression))
+                  }
+                }
+                None => ()
+              }
+              match
+                tiled_base64_gid_array(
+                  data_value, "layers[].data", expected_size,
+                ) {
+                Err(error) => return Err(error)
+                Ok(value) => value
+              }
+            }
+            _ => return Err(TiledFieldMustBeIntegerArray("layers[].data"))
           }
           if data.length() != expected_size {
             return Err(

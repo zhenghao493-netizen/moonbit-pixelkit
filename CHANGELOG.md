@@ -16,6 +16,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Replaced A*'s linear candidate scan with a priority-queue frontier, preserving weighted-route optimality while substantially improving the benchmarked 32 x 32 route and movement-preview workloads.
 - CI now compiles the isolated benchmark package on every push and pull request.
 - Added weighted-map corpus tests that cross-check A* route costs against Dijkstra results.
+- Tiled JSON import now supports uncompressed Base64 little-endian 32-bit layer data and returns typed errors for unsupported encodings, compression, malformed Base64, and byte-count mismatches.
 
 ## 0.1.1 - 2026-07-17
 
