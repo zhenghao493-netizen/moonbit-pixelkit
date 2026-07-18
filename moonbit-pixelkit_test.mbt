@@ -265,6 +265,45 @@ test "detailed Tiled errors expose a missing field" {
 }
 
 ///|
+test "detailed Tiled base64 errors expose encoding data and size" {
+  let unsupported_encoding =
+    #|{
+    #|  "width": 1,
+    #|  "height": 1,
+    #|  "layers": [{ "name": "Collision", "type": "tilelayer", "encoding": "csv", "data": "0" }]
+    #|}
+  let invalid_base64 =
+    #|{
+    #|  "width": 1,
+    #|  "height": 1,
+    #|  "layers": [{ "name": "Collision", "type": "tilelayer", "encoding": "base64", "data": "not base64!" }]
+    #|}
+  let wrong_size =
+    #|{
+    #|  "width": 2,
+    #|  "height": 1,
+    #|  "layers": [{ "name": "Collision", "type": "tilelayer", "encoding": "base64", "data": "AAAAAA==" }]
+    #|}
+  match parse_tiled_json_detailed(unsupported_encoding) {
+    Err(TiledUnsupportedEncoding(encoding)) => inspect(encoding, content="csv")
+    _ => inspect(false, content="true")
+  }
+  match parse_tiled_json_detailed(invalid_base64) {
+    Err(TiledInvalidBase64Data(field)) =>
+      inspect(field, content="layers[].data")
+    _ => inspect(false, content="true")
+  }
+  match parse_tiled_json_detailed(wrong_size) {
+    Err(TiledBase64SizeMismatch(field, actual, expected)) => {
+      inspect(field, content="layers[].data")
+      inspect(actual, content="4")
+      inspect(expected, content="8")
+    }
+    _ => inspect(false, content="true")
+  }
+}
+
+///|
 test "neighbors helpers" {
   inspect(neighbors4(point(2, 2)).length(), content="4")
   inspect(neighbors8(point(2, 2)).length(), content="8")
