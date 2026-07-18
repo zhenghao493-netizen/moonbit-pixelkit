@@ -104,6 +104,62 @@ pub struct TiledOptions {
 } derive(Debug)
 
 ///|
+/// A structured failure returned by the detailed map parsers.
+pub enum ParseError {
+  EmptyMap
+  EmptyFirstRow
+  NonRectangularRow(Int, Int, Int)
+  UnknownAsciiTile(Int, Int, Char)
+  InvalidDefaultCost
+  InvalidTerrainCost(String, Int)
+  TiledInvalidJson
+  TiledRootMustBeObject
+  TiledMissingField(String)
+  TiledFieldMustBeInteger(String)
+  TiledFieldMustBeString(String)
+  TiledFieldMustBeIntegerArray(String)
+  TiledInvalidDimensions
+  TiledUnsupportedOrientation(String)
+  TiledLayersMustBeArray
+  TiledLayersMustBeObjects
+  TiledLayerNotFound(String)
+  TiledLayerNotTileLayer(String)
+  TiledLayerSizeMismatch(String, Int, Int)
+} derive(Eq, Debug)
+
+///|
+/// Render a structured parser error as a concise user-facing message.
+pub fn ParseError::message(self : ParseError) -> String {
+  match self {
+    EmptyMap => "map is empty"
+    EmptyFirstRow => "map has an empty first row"
+    NonRectangularRow(row, width, expected) =>
+      "row \{row} has width \{width}, expected \{expected}"
+    UnknownAsciiTile(row, column, tile) =>
+      "unknown tile '\{tile}' at row \{row}, column \{column}"
+    InvalidDefaultCost => "default_cost must be positive"
+    InvalidTerrainCost(id, cost) =>
+      "terrain cost for '\{id}' must be positive, got \{cost}"
+    TiledInvalidJson => "invalid Tiled JSON"
+    TiledRootMustBeObject => "Tiled root must be an object"
+    TiledMissingField(field) => "Tiled JSON is missing '\{field}'"
+    TiledFieldMustBeInteger(field) => "Tiled '\{field}' must be an integer"
+    TiledFieldMustBeString(field) => "Tiled '\{field}' must be a string"
+    TiledFieldMustBeIntegerArray(field) =>
+      "Tiled '\{field}' must be an integer array"
+    TiledInvalidDimensions => "Tiled width and height must be positive"
+    TiledUnsupportedOrientation(orientation) =>
+      "Tiled orientation '\{orientation}' is not supported; use orthogonal"
+    TiledLayersMustBeArray => "Tiled 'layers' must be an array"
+    TiledLayersMustBeObjects => "Tiled layers must be objects"
+    TiledLayerNotFound(name) => "Tiled layer '\{name}' was not found"
+    TiledLayerNotTileLayer(name) => "Tiled layer '\{name}' is not a tilelayer"
+    TiledLayerSizeMismatch(name, actual, expected) =>
+      "Tiled layer '\{name}' has \{actual} cells, expected \{expected}"
+  }
+}
+
+///|
 /// Default ASCII conventions: `#` walls, `.` floors, `S` start, `G` goal.
 pub fn AsciiOptions::default() -> AsciiOptions {
   { wall: '#', floor: '.', start: 'S', goal: 'G' }
@@ -412,21 +468,34 @@ pub fn parse_ascii_map(
   input : String,
   options? : AsciiOptions = AsciiOptions::default(),
 ) -> Result[TileMap, String] {
+  match parse_ascii_map_detailed(input, options~) {
+    Ok(map) => Ok(map)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Parse an ASCII tile map and return structured errors with row and column details.
+pub fn parse_ascii_map_detailed(
+  input : String,
+  options? : AsciiOptions = AsciiOptions::default(),
+) -> Result[TileMap, ParseError] {
   let rows = input_rows(input)
   if rows.length() == 0 {
-    return Err("map is empty")
+    return Err(EmptyMap)
   }
   let width = rows[0].iter().count()
   if width == 0 {
-    return Err("map has an empty first row")
+    return Err(EmptyFirstRow)
   }
   let tiles : Array[Tile] = []
   for row_index in 0..<rows.length() {
     let row = rows[row_index]
     let row_width = row.iter().count()
     if row_width != width {
-      return Err("row \{row_index} has width \{row_width}, expected \{width}")
+      return Err(NonRectangularRow(row_index, row_width, width))
     }
+    let mut column = 0
     for ch in row.iter() {
       if ch == options.wall {
         tiles.push(tile("#", true, 0))
@@ -437,8 +506,9 @@ pub fn parse_ascii_map(
       } else if ch == options.goal {
         tiles.push(tile("goal", false, 1))
       } else {
-        return Err("unknown tile '\{ch}' at row \{row_index}")
+        return Err(UnknownAsciiTile(row_index, column, ch))
       }
+      column = column + 1
     }
   }
   Ok({ width, height: rows.length(), tiles })
@@ -448,6 +518,12 @@ pub fn parse_ascii_map(
 /// Parse a CSV tile map. `1` is treated as a wall; all other ids are walkable.
 pub fn parse_csv_map(input : String) -> Result[TileMap, String] {
   parse_csv_map_with_options(input, CsvOptions::default())
+}
+
+///|
+/// Parse a default CSV tile map and return structured errors.
+pub fn parse_csv_map_detailed(input : String) -> Result[TileMap, ParseError] {
+  parse_csv_map_with_options_detailed(input, CsvOptions::default())
 }
 
 ///|
@@ -466,22 +542,34 @@ pub fn parse_csv_map_with_options(
   input : String,
   options : CsvOptions,
 ) -> Result[TileMap, String] {
+  match parse_csv_map_with_options_detailed(input, options) {
+    Ok(map) => Ok(map)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Parse a CSV tile map and return structured parser and option errors.
+pub fn parse_csv_map_with_options_detailed(
+  input : String,
+  options : CsvOptions,
+) -> Result[TileMap, ParseError] {
   if options.default_cost <= 0 {
-    return Err("default_cost must be positive")
+    return Err(InvalidDefaultCost)
   }
   for item in options.terrain_costs {
     if item.cost <= 0 {
-      return Err("terrain cost for '\{item.id}' must be positive")
+      return Err(InvalidTerrainCost(item.id, item.cost))
     }
   }
   let rows = input_rows(input)
   if rows.length() == 0 {
-    return Err("map is empty")
+    return Err(EmptyMap)
   }
   let first = rows[0].split(",").map(cell => cell.trim().to_owned()).collect()
   let width = first.length()
   if width == 0 {
-    return Err("map has an empty first row")
+    return Err(EmptyFirstRow)
   }
   let tiles : Array[Tile] = []
   for row_index in 0..<rows.length() {
@@ -490,9 +578,7 @@ pub fn parse_csv_map_with_options(
       .map(cell => cell.trim().to_owned())
       .collect()
     if cells.length() != width {
-      return Err(
-        "row \{row_index} has width \{cells.length()}, expected \{width}",
-      )
+      return Err(NonRectangularRow(row_index, cells.length(), width))
     }
     for id in cells {
       let is_wall = options.wall_ids.contains(id)
@@ -519,38 +605,41 @@ fn TiledOptions::cost_for_gid(self : TiledOptions, gid : Int) -> Int {
 fn tiled_required(
   object : Map[String, Json],
   key : String,
-) -> Result[Json, String] {
+) -> Result[Json, ParseError] {
   match object.get(key) {
     Some(value) => Ok(value)
-    None => Err("Tiled JSON is missing '\{key}'")
+    None => Err(TiledMissingField(key))
   }
 }
 
 ///|
-fn tiled_int(value : Json, label : String) -> Result[Int, String] {
+fn tiled_int(value : Json, label : String) -> Result[Int, ParseError] {
   try {
     let decoded : Int = @json.from_json(value)
     Ok(decoded)
   } catch {
-    _ => Err("Tiled '\{label}' must be an integer")
+    _ => Err(TiledFieldMustBeInteger(label))
   }
 }
 
 ///|
-fn tiled_string(value : Json, label : String) -> Result[String, String] {
+fn tiled_string(value : Json, label : String) -> Result[String, ParseError] {
   match value {
     String(text) => Ok(text)
-    _ => Err("Tiled '\{label}' must be a string")
+    _ => Err(TiledFieldMustBeString(label))
   }
 }
 
 ///|
-fn tiled_int_array(value : Json, label : String) -> Result[Array[Int], String] {
+fn tiled_int_array(
+  value : Json,
+  label : String,
+) -> Result[Array[Int], ParseError] {
   try {
     let decoded : Array[Int] = @json.from_json(value)
     Ok(decoded)
   } catch {
-    _ => Err("Tiled '\{label}' must be an integer array")
+    _ => Err(TiledFieldMustBeIntegerArray(label))
   }
 }
 
@@ -559,7 +648,7 @@ fn tiled_layer_data(
   layers : Array[Json],
   name : String,
   expected_size : Int,
-) -> Result[Array[Int], String] {
+) -> Result[Array[Int], ParseError] {
   for layer in layers {
     match layer {
       Object(object) => {
@@ -581,7 +670,7 @@ fn tiled_layer_data(
             Ok(value) => value
           }
           if layer_type != "tilelayer" {
-            return Err("Tiled layer '\{name}' is not a tilelayer")
+            return Err(TiledLayerNotTileLayer(name))
           }
           let data_value = match tiled_required(object, "data") {
             Err(message) => return Err(message)
@@ -593,16 +682,16 @@ fn tiled_layer_data(
           }
           if data.length() != expected_size {
             return Err(
-              "Tiled layer '\{name}' has \{data.length()} cells, expected \{expected_size}",
+              TiledLayerSizeMismatch(name, data.length(), expected_size),
             )
           }
           return Ok(data)
         }
       }
-      _ => return Err("Tiled layers must be objects")
+      _ => return Err(TiledLayersMustBeObjects)
     }
   }
-  Err("Tiled layer '\{name}' was not found")
+  Err(TiledLayerNotFound(name))
 }
 
 ///|
@@ -611,12 +700,24 @@ pub fn parse_tiled_json(
   input : String,
   options? : TiledOptions = TiledOptions::default(),
 ) -> Result[TileMap, String] {
+  match parse_tiled_json_detailed(input, options~) {
+    Ok(map) => Ok(map)
+    Err(error) => Err(error.message())
+  }
+}
+
+///|
+/// Parse a Tiled JSON map and return structured import errors.
+pub fn parse_tiled_json_detailed(
+  input : String,
+  options? : TiledOptions = TiledOptions::default(),
+) -> Result[TileMap, ParseError] {
   if options.default_cost <= 0 {
-    return Err("default_cost must be positive")
+    return Err(InvalidDefaultCost)
   }
   for item in options.terrain_costs {
     if item.cost <= 0 {
-      return Err("terrain cost for '\{item.id}' must be positive")
+      return Err(InvalidTerrainCost(item.id, item.cost))
     }
   }
   try {
@@ -644,7 +745,7 @@ pub fn parse_tiled_json(
           Ok(value) => value
         }
         if width <= 0 || height <= 0 {
-          return Err("Tiled width and height must be positive")
+          return Err(TiledInvalidDimensions)
         }
         match object.get("orientation") {
           Some(value) => {
@@ -653,14 +754,14 @@ pub fn parse_tiled_json(
               Ok(value) => value
             }
             if orientation != "orthogonal" {
-              return Err("only orthogonal Tiled maps are supported")
+              return Err(TiledUnsupportedOrientation(orientation))
             }
           }
           None => ()
         }
         let layers = match layers_value {
           Array(items) => items
-          _ => return Err("Tiled 'layers' must be an array")
+          _ => return Err(TiledLayersMustBeArray)
         }
         let size = width * height
         let collision = match
@@ -690,10 +791,10 @@ pub fn parse_tiled_json(
         }
         Ok({ width, height, tiles })
       }
-      _ => Err("Tiled root must be an object")
+      _ => Err(TiledRootMustBeObject)
     }
   } catch {
-    _ => Err("invalid Tiled JSON")
+    _ => Err(TiledInvalidJson)
   }
 }
 

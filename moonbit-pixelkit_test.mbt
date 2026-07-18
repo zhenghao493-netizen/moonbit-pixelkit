@@ -59,6 +59,25 @@ test "ASCII parser rejects unknown tiles" {
 }
 
 ///|
+test "detailed ASCII errors expose tile coordinates" {
+  let source =
+    #|S.x
+    #|..G
+  match parse_ascii_map_detailed(source) {
+    Err(UnknownAsciiTile(row, column, tile)) => {
+      inspect(row, content="0")
+      inspect(column, content="2")
+      inspect(tile, content="x")
+      inspect(
+        parse_ascii_map(source).unwrap_err(),
+        content="unknown tile 'x' at row 0, column 2",
+      )
+    }
+    _ => inspect(false, content="true")
+  }
+}
+
+///|
 test "ASCII parser rejects empty maps" {
   inspect(parse_ascii_map("") is Err(_), content="true")
 }
@@ -113,6 +132,18 @@ test "CSV parser rejects invalid dimensions and costs" {
 }
 
 ///|
+test "detailed CSV errors expose option failures" {
+  let options = csv_options(terrain_costs=[terrain_cost("mud", 0)])
+  match parse_csv_map_with_options_detailed("0,mud", options) {
+    Err(InvalidTerrainCost(id, cost)) => {
+      inspect(id, content="mud")
+      inspect(cost, content="0")
+    }
+    _ => inspect(false, content="true")
+  }
+}
+
+///|
 test "CSV parser accepts CRLF and trailing newline" {
   let map = parse_csv_map("0,1\r\n2,3\r\n").unwrap()
   inspect(map.width(), content="2")
@@ -164,6 +195,20 @@ test "Tiled JSON parser rejects unsupported maps and malformed layers" {
   inspect(parse_tiled_json(wrong_size) is Err(_), content="true")
   inspect(parse_tiled_json("{}") is Err(_), content="true")
   inspect(parse_tiled_json("{ invalid JSON") is Err(_), content="true")
+}
+
+///|
+test "detailed Tiled errors expose a missing field" {
+  match parse_tiled_json_detailed("{}") {
+    Err(TiledMissingField(field)) => {
+      inspect(field, content="width")
+      inspect(
+        parse_tiled_json("{}").unwrap_err(),
+        content="Tiled JSON is missing 'width'",
+      )
+    }
+    _ => inspect(false, content="true")
+  }
 }
 
 ///|

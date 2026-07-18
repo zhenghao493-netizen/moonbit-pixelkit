@@ -8,6 +8,8 @@ All notable changes to `moonbit-pixelkit` are documented here.
 
 - Added `parse_tiled_json` and `tiled_options` for importing orthogonal, uncompressed Tiled JSON maps with configurable collision and terrain layers.
 - Added `examples/tiled_tactical_preview` to demonstrate editor-exported map import feeding a weighted movement preview.
+- Added `ParseError` plus detailed ASCII, CSV, and Tiled parsing APIs for typed diagnostics without breaking existing string-returning parser APIs.
+- Added `examples/parse_diagnostics` and an editable ASCII map lab in `showcase.html` for immediate parser and movement-preview feedback.
 
 ## 0.1.1 - 2026-07-17
 

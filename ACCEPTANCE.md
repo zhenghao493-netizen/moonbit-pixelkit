@@ -42,6 +42,7 @@ moon run examples/game_loop_stub
 moon run examples/turn_based_movement
 moon run examples/tactical_preview
 moon run examples/tiled_tactical_preview
+moon run examples/parse_diagnostics
 ```
 
 Expected baseline:
@@ -52,6 +53,7 @@ Expected baseline:
 - `examples/turn_based_movement` demonstrates game-style movement range and path planning in one run.
 - `examples/tactical_preview` demonstrates the strongest reviewer-facing output: map rendering, movement range, a selected route, and a full route to the goal.
 - `examples/tiled_tactical_preview` demonstrates importing an editor-exported Tiled JSON map into a weighted movement preview.
+- `examples/parse_diagnostics` demonstrates matching structured parser errors for editor and import-tool feedback.
 - `showcase.html` opens as a standalone browser preview for the same tactical movement story.
 
 ## Feature Coverage
@@ -60,6 +62,7 @@ Expected baseline:
 - `parse_csv_map` parses CSV tile ids, with `1` treated as a wall by default.
 - `parse_csv_map_with_options` supports configurable wall ids and terrain costs.
 - `parse_tiled_json` imports orthogonal Tiled JSON maps with inline tile-layer data, a configurable collision layer, optional terrain layer, and GID-to-cost mapping.
+- Detailed parser variants return `ParseError` values with row/column, option, Tiled field, orientation, and layer context; legacy parser APIs retain string errors for simple callers.
 - `TileMap` supports dimensions, bounds checks, tile lookup, movement costs, id lookup, and ASCII rendering.
 - `TileMap::single_point_with_id` validates maps that should contain exactly one start or goal marker.
 - `TileMap::path_cost` sums the movement cost of a planned route for game-style turn previews.

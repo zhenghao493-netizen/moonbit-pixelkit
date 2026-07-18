@@ -12,7 +12,7 @@ Open the browser showcase:
 showcase.html
 ```
 
-The page renders the same tactical movement preview as a color grid. Click an open tile to preview a new target, or switch between the current-turn route and the full route to the goal.
+The page renders the same tactical movement preview as a color grid. Click an open tile to preview a new target, switch between the current-turn route and the full route to the goal, or paste an ASCII map into the built-in map lab to validate it and recalculate the preview.
 
 Run the tactical preview:
 
@@ -56,6 +56,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - rectangular ASCII map parsing
 - CSV tile map parsing
 - orthogonal Tiled JSON import with collision and terrain layers
+- structured parse errors with row, column, field, and layer context
 - tile lookup and walkability checks
 - movement costs
 - four-way and eight-way neighbor helpers
@@ -127,6 +128,7 @@ moon run examples/game_loop_stub
 moon run examples/turn_based_movement
 moon run examples/tactical_preview
 moon run examples/tiled_tactical_preview
+moon run examples/parse_diagnostics
 ```
 
 Build the publish archive:
@@ -158,9 +160,14 @@ println("path length: \{path.length()}")
 
 - `point(x, y)` creates a `Point`.
 - `parse_ascii_map(text, options~)` parses `#`, `.`, `S`, and `G` maps by default.
+- `parse_ascii_map_detailed(text, options~)` returns `ParseError` values with ASCII tile coordinates.
 - `parse_csv_map(text)` parses CSV tile ids; `1` is treated as a wall.
+- `parse_csv_map_detailed(text)` returns structured CSV map errors using default options.
+- `parse_csv_map_with_options_detailed(text, options)` returns structured CSV and option errors.
 - `parse_tiled_json(text, options~)` imports an orthogonal, uncompressed Tiled JSON map from named collision and optional terrain layers.
+- `parse_tiled_json_detailed(text, options~)` returns structured JSON field, orientation, and layer import errors.
 - `tiled_options(...)` configures Tiled collision GIDs, terrain layer, and movement-cost mapping.
+- `ParseError::message()` converts a structured parser error to concise display text while legacy parser APIs continue returning `Result[..., String]`.
 - `TileMap::in_bounds(point)` checks map bounds.
 - `TileMap::tile_at(point)` returns a tile when the coordinate is valid.
 - `TileMap::is_walkable(point)` returns whether movement is allowed.
@@ -223,7 +230,7 @@ This intentionally supports the portable core of Tiled JSON: orthogonal maps, na
 
 ## Roadmap
 
-- Structured parse and pathfinding error types.
+- Structured pathfinding and path-validation error types.
 - Additional gameplay helpers for turn previews and editor tooling.
 - More package examples after the next Mooncakes release.
 - Broader Tiled import support such as chunked layers and encoded data, based on real user demand.
