@@ -43,6 +43,7 @@ moon run examples/turn_based_movement
 moon run examples/tactical_preview
 moon run examples/tiled_tactical_preview
 moon run examples/parse_diagnostics
+moon bench benchmarks/pathfinding --release --deny-warn
 ```
 
 Expected baseline:
@@ -54,7 +55,9 @@ Expected baseline:
 - `examples/tactical_preview` demonstrates the strongest reviewer-facing output: map rendering, movement range, a selected route, and a full route to the goal.
 - `examples/tiled_tactical_preview` demonstrates importing an editor-exported Tiled JSON map into a weighted movement preview.
 - `examples/parse_diagnostics` demonstrates matching structured parser and path errors for editor and game-tool feedback.
+- `benchmarks/pathfinding` measures release-mode A*, weighted reachability, and movement-preview workloads on a fixed 32 x 32 map.
 - `showcase.html` opens as a standalone browser preview for the same tactical movement story.
+- `PERFORMANCE.md` records the reproducible benchmark scenario and local baseline; benchmark values are informational rather than performance guarantees.
 
 ## Feature Coverage
 

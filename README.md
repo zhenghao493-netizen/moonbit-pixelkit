@@ -68,6 +68,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - ASCII overlays for reachable cells and planned paths
 - game-style examples for pathfinding, turn previews, and tactical movement
 - CI with `moon check`, `moon build`, and `moon test`
+- reproducible A* and Dijkstra performance baselines
 
 ## Acceptance Checklist
 
@@ -137,8 +138,15 @@ Build the publish archive:
 moon package
 ```
 
+Run the release-mode performance baseline:
+
+```bash
+moon bench benchmarks/pathfinding --release --deny-warn
+```
+
 See [ACCEPTANCE.md](ACCEPTANCE.md) for reviewer-oriented verification notes.
 See [CHANGELOG.md](CHANGELOG.md) for release notes.
+See [PERFORMANCE.md](PERFORMANCE.md) for benchmark methodology and a local baseline.
 Open `showcase.html` for a browser-based visual preview.
 
 ## Example

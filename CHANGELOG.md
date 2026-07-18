@@ -11,6 +11,7 @@ All notable changes to `moonbit-pixelkit` are documented here.
 - Added `ParseError` plus detailed ASCII, CSV, and Tiled parsing APIs for typed diagnostics without breaking existing string-returning parser APIs.
 - Added `examples/parse_diagnostics` and an editable ASCII map lab in `showcase.html` for immediate parser and movement-preview feedback.
 - Added `PathError` and detailed path cost, validation, reachability, movement preview, and A* APIs for typed gameplay diagnostics.
+- Added an isolated release-mode benchmark package and `PERFORMANCE.md` for reproducible A*, Dijkstra, and movement-preview baselines.
 
 ## 0.1.1 - 2026-07-17
 
