@@ -18,7 +18,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - Public repository with visible commit history.
 - `README.md` with project status, commands, examples, API overview, and roadmap.
 - `moonbit-pixelkit-project-proposal.md` with the project proposal.
-- `CHANGELOG.md` with the published `0.1.1` release notes.
+- `CHANGELOG.md` with the published `0.2.0` release notes.
 - `LICENSE` using MIT.
 - `.github/workflows/ci.yml` running formatting, `moon check`, `moon build`, `moon test`, benchmark compilation, and package-metadata verification.
 - `showcase.html` with a browser-based tactical movement preview.
@@ -82,11 +82,11 @@ Expected baseline:
 
 - The package intentionally targets small to medium grid maps for games, demos, and teaching examples.
 - Tiled JSON support deliberately covers orthogonal maps with native integer or uncompressed Base64 layer data; PNG, TMX, infinite/chunked maps, and compressed layer data are not included.
-- Mooncakes publication is complete for version `0.1.1`.
+- Mooncakes publication is complete for version `0.2.0`.
 
 ## Publication Status
 
-Version `0.1.1` is published on Mooncakes:
+Version `0.2.0` is published on Mooncakes:
 
 https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
 
@@ -99,7 +99,7 @@ moon package
 Recommended release tag after final review:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
-git push gitlink v0.1.1
+git tag v0.2.0
+git push origin v0.2.0
+git push gitlink v0.2.0
 ```

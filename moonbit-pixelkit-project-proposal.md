@@ -52,7 +52,7 @@ moonbit-pixelkit 是一个面向 2D 像素游戏、战棋原型、迷宫/Rogueli
 - `LICENSE`：MIT 开源许可证。
 - `examples/`：多个可直接运行的 MoonBit 示例。
 - `showcase.html`：可在浏览器打开的视觉展示页面。
-- Mooncakes 0.1.1 发布页：https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
+- Mooncakes 0.2.0 发布页：https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
 
 推荐验收命令：
 
@@ -73,7 +73,7 @@ moon run examples/tactical_preview
 
 ## 后续计划
 
-- 持续维护 Mooncakes 已发布的 0.1.1 版本，并在后续功能稳定后发布下一版。
-- 增加结构化错误类型，替代当前字符串错误。
+- 持续维护 Mooncakes 已发布的 0.2.0 版本，并在后续功能稳定后发布下一版。
+- 扩展结构化错误类型，为更多编辑器与运行时诊断场景提供稳定错误码。
 - 继续补充面向编辑器/关卡工具的地图预览和调试辅助能力。
-- 评估 Tiled JSON 等常见 2D 地图格式的轻量导入支持。
+- 在真实需求驱动下扩展 Tiled JSON 的 chunk 和压缩图层支持。

@@ -2,7 +2,7 @@
 
 All notable changes to `moonbit-pixelkit` are documented here.
 
-## Unreleased
+## 0.2.0 - 2026-07-18
 
 ### Added
 

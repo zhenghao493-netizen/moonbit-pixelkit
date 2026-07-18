@@ -251,11 +251,11 @@ Tiled stores horizontal, vertical, diagonal, and legacy rotation state in the hi
 
 ## Release
 
-Version `0.1.1` is published on Mooncakes:
+Version `0.2.0` is published on Mooncakes:
 
 https://mooncakes.io/docs/ttxiangshang/moonbit-pixelkit
 
-The `v0.1.1` tag matches the current Mooncakes release; the main branch may additionally contain unreleased improvements.
+The `v0.2.0` tag matches the current Mooncakes release.
 
 Local packaging is verified with:
 
@@ -266,9 +266,9 @@ moon package
 Recommended release tag:
 
 ```bash
-git tag v0.1.1
-git push origin v0.1.1
-git push gitlink v0.1.1
+git tag v0.2.0
+git push origin v0.2.0
+git push gitlink v0.2.0
 ```
 
 ## Development Notes
