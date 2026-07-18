@@ -312,6 +312,41 @@ test "A star keeps the lowest weighted route" {
 }
 
 ///|
+test "A star matches Dijkstra costs across weighted maps" {
+  let first =
+    #|0,2,0,0
+    #|0,1,3,0
+    #|0,0,0,0
+  let second =
+    #|0,3,0,0
+    #|0,1,1,0
+    #|0,0,2,0
+  let third =
+    #|0,0,3,0
+    #|2,1,1,0
+    #|0,0,0,0
+  let options = csv_options(terrain_costs=[
+    terrain_cost("2", 3),
+    terrain_cost("3", 7),
+  ])
+  let start = point(0, 0)
+  let goal = point(3, 2)
+  for source in [first, second, third] {
+    let map = parse_csv_map_with_options(source, options).unwrap()
+    let reachable = bfs_reachable_with_costs(map, start, 100).unwrap()
+    let mut dijkstra_cost = -1
+    for cell in reachable {
+      if cell.point() == goal {
+        dijkstra_cost = cell.cost()
+      }
+    }
+    inspect(dijkstra_cost > 0, content="true")
+    let path = astar(map, start, goal).unwrap().unwrap()
+    inspect(map.path_cost(path).unwrap(), content=dijkstra_cost.to_string())
+  }
+}
+
+///|
 test "movement preview combines range target cost and path" {
   let source =
     #|0,2,3

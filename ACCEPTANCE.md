@@ -75,6 +75,7 @@ Expected baseline:
 - `bfs_reachable_with_costs` uses a priority-queue Dijkstra frontier to return reachable cells with their minimum accumulated movement costs.
 - `movement_preview` combines reachable cells, target reachability, target cost, and selected-target path for tactical UI flows.
 - `astar` uses a priority-queue frontier to return a minimum-cost path or `None` when a reachable path does not exist.
+- Weighted-map corpus tests cross-check A* path costs against Dijkstra reachability costs.
 - `SearchOptions` supports four-way movement by default and optional diagonal movement without wall-corner cutting unless explicitly enabled.
 
 ## Known Boundaries
