@@ -20,7 +20,7 @@ This guide is for reviewers of the 2026 MoonBit open-source ecosystem contest.
 - `moonbit-pixelkit-project-proposal.md` with the project proposal.
 - `CHANGELOG.md` with the published `0.1.1` release notes.
 - `LICENSE` using MIT.
-- `.github/workflows/ci.yml` running formatting, `moon check`, `moon build`, `moon test`, and package-metadata verification.
+- `.github/workflows/ci.yml` running formatting, `moon check`, `moon build`, `moon test`, benchmark compilation, and package-metadata verification.
 - `showcase.html` with a browser-based tactical movement preview.
 - Runnable examples under `examples/`.
 - Unit tests covering parser, map query, named point lookup, reachability with costs, movement previews, A*, path cost summaries, rendering, and error paths.

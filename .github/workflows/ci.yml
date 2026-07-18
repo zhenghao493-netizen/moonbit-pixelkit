@@ -19,6 +19,8 @@ jobs:
         run: moon build --deny-warn
       - name: Test
         run: moon test --deny-warn
+      - name: Benchmark Build
+        run: moon bench benchmarks/pathfinding --release --build-only --deny-warn
       - name: Format
         run: |
           moon fmt

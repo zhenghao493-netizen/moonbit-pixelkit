@@ -67,7 +67,7 @@ This project is being developed for the 2026 MoonBit open-source ecosystem conte
 - high-level movement previews for tactical target selection
 - ASCII overlays for reachable cells and planned paths
 - game-style examples for pathfinding, turn previews, and tactical movement
-- CI with `moon check`, `moon build`, and `moon test`
+- CI with formatting, `moon check`, `moon build`, `moon test`, and benchmark compilation
 - reproducible A* and Dijkstra performance baselines
 
 ## Acceptance Checklist
